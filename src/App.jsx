@@ -1,11 +1,15 @@
-import { Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import SingleJourney from "./pages/SingleJourney";
 
 function App() {
   return (
-    <Routes>
-      <Route />
-      <Route />
-    </Routes>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/edit" element={<SingleJourney />} />
+      </Routes>
+    </Router>
   );
 }
 
