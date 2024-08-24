@@ -1,4 +1,4 @@
-import GoogleMap from "../../utils/mapApi";
+import GoogleMap from "../SingleJourney/Map";
 import { styled } from "styled-components";
 
 const SingleJourney = () => {
@@ -21,9 +21,7 @@ const Container = styled.div`
 `;
 
 const MapContainer = styled.div`
-  width: 70%;
+  width: 100%;
 `;
 
-const ListContainer = styled.div`
-  /* width: 30%; */
-`;
+const ListContainer = styled.div``;
