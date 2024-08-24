@@ -32,6 +32,13 @@ export function loginReducer(state, action) {
           error: "帳號或密碼錯誤",
         };
       }
+
+    case "LOGOUT":
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("userId"); // 清除保存的用户ID
+      return {
+        ...initialState,
+      };
     default:
       return state;
   }
