@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 const Login = () => {
   const [state, dispatch] = useReducer(loginReducer, initialState);
-  const { email, password, error, isLoggedIn } = state;
+  const { userId, email, password, error, isLoggedIn } = state;
   const navigate = useNavigate();
 
   const handleInputChange = (event) => {
@@ -29,6 +29,17 @@ const Login = () => {
 
   return (
     <Container onSubmit={handleSubmit}>
+      <FieldWrapper>
+        <Label htmlFor="userId">使用者 ID：</Label>
+        <Input
+          id="userId"
+          name="userId"
+          type="text"
+          value={userId}
+          onChange={handleInputChange}
+          required
+        />
+      </FieldWrapper>
       <FieldWrapper>
         <Label htmlFor="email">帳號：</Label>
         <Input

@@ -1,9 +1,11 @@
 export const initialState = {
+  userId: "",
   email: "",
   password: "",
   error: null,
   isLoggedIn: false,
 };
+
 export function loginReducer(state, action) {
   switch (action.type) {
     case "SET_FIELD":
@@ -12,7 +14,12 @@ export function loginReducer(state, action) {
         [action.field]: action.value,
       };
     case "LOGIN":
-      if (state.email === "admin@example" && state.password === "password") {
+      if (
+        state.email === "admin@example.com" &&
+        state.password === "password"
+      ) {
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userId", state.userId);
         return {
           ...state,
           isLoggedIn: true,
@@ -20,6 +27,7 @@ export function loginReducer(state, action) {
         };
       } else {
         return {
+          ...state,
           isLoggedIn: false,
           error: "帳號或密碼錯誤",
         };
