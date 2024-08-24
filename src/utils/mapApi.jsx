@@ -16,10 +16,7 @@ const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const Map = () => {
   const [map, setMap] = useState(null);
   const [places, setPlaces] = useState([]);
-  const [center, setCenter] = useState({
-    lat: 25.033,
-    lng: 121.5654,
-  });
+  const [center, setCenter] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [placeDetails, setPlaceDetails] = useState(null);
 
@@ -46,7 +43,9 @@ const Map = () => {
   const handleMapLoad = useCallback(
     (mapInstance) => {
       setMap(mapInstance);
-      fetchPlaces(mapInstance, center);
+      if (center) {
+        fetchPlaces(mapInstance, center);
+      }
     },
     [center, fetchPlaces]
   );
