@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Modal from "./Modal";
+import attractionPin from "./img/bluePin.png";
 
 const mapContainerStyle = {
   width: "100%",
@@ -90,6 +91,10 @@ const Map = () => {
               key={place.place_id}
               position={{ lat: lat, lng: lng }}
               onClick={() => handleMarkerClick(place)}
+              icon={{
+                url: attractionPin,
+                scaledSize: new window.google.maps.Size(40, 40),
+              }}
             />
           );
         })}
