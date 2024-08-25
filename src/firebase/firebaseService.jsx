@@ -12,6 +12,7 @@ import {
   limit as firestoreLimit,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
+import dayjs from "dayjs";
 
 export const handleCreateJourney = async (title, description) => {
   try {
@@ -79,41 +80,24 @@ export async function fetchUserDocuments({ pageParam = null, limit = 6 }) {
   }
 }
 
-export const handleCreateTrip = async (placeDetail, date, startTime) => {
+export const createTrip = async (placeDetail, tripDate, tripStartTime) => {
   try {
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      throw new Error("User ID not found in localStorage");
-    }
-
-    const usersCollectionRef = collection(db, "users");
-    const userQuery = query(usersCollectionRef, where("user_id", "==", userId));
-    const querySnapshot = await getDocs(userQuery);
-
-    if (querySnapshot.empty) {
-      throw new Error("No user documents found for the given user ID");
-    }
-
-    const userDocRef = querySnapshot.docs[0].ref;
-
+    console.log("placeDetail", placeDetail);
     const photos = placeDetail.photos
       ? placeDetail.photos.map((photo) => photo.getUrl())
       : [];
-
-    const tripsCollectionRef = collection(userDocRef, "trips");
-
-    await addDoc(tripsCollectionRef, {
+    await addDoc(collection(db, "users/NOSTuSs6OBCunlMBm6oF/trips"), {
       name: placeDetail.name,
       address: placeDetail.formatted_address,
       place_id: placeDetail.place_id,
       photos: photos,
-      date: date,
-      startTime: startTime,
+      date: dayjs(tripDate).format("YYYY-MM-DD"),
+      startTime: dayjs(tripStartTime).format("HH:mm"),
     });
-
-    console.log("New attraction added successfully!");
+    return true;
   } catch (error) {
     console.error("Error adding place to Firestore:", error);
+    return false;
   }
 };
 
