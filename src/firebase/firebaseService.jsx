@@ -1,7 +1,7 @@
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 
-export const handleCreateTrip = async (placeDetail) => {
+export const handleCreateTrip = async (placeDetail, date, startTime) => {
   try {
     console.log("placeDetail", placeDetail);
     const photos = placeDetail.photos
@@ -12,6 +12,8 @@ export const handleCreateTrip = async (placeDetail) => {
       address: placeDetail.formatted_address,
       place_id: placeDetail.place_id,
       photos: photos,
+      date: date,
+      startTime: startTime,
     });
 
     console.log("add new attraction successfully!");

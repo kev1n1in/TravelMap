@@ -1,13 +1,32 @@
+import { useState } from "react";
 import { handleCreateTrip } from "../../firebase/firebaseService";
 import { styled } from "styled-components";
 const Modal = ({ placeDetails, onClose }) => {
+  const [tripDate, setTripDate] = useState("");
+  const [tripStartTime, setTripStartTime] = useState("");
   if (!placeDetails) return null;
 
   return (
     <ModalContainer>
       <ModalContent>
+        <input
+          type="date"
+          value={tripDate}
+          onChange={(e) => setTripDate(e.target.value)}
+        />
+        <input
+          type="time"
+          value={tripStartTime}
+          onChange={(e) => setTripStartTime(e.target.value)}
+        />
         <button onClick={onClose}>Close</button>
-        <button onClick={() => handleCreateTrip(placeDetails)}>Create</button>
+        <button
+          onClick={() =>
+            handleCreateTrip(placeDetails, tripDate, tripStartTime)
+          }
+        >
+          Create
+        </button>
       </ModalContent>
     </ModalContainer>
   );
