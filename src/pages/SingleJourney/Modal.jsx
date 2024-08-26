@@ -11,13 +11,14 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 
-const Modal = ({ placeDetails, onClose }) => {
+const Modal = ({ journeyId, placeDetails, onClose }) => {
   const [tripDate, setTripDate] = useState(dayjs());
   const [tripStartTime, setTripStartTime] = useState(
     dayjs().set("hour", 14).startOf("hour")
   );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
+
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
       const urls = placeDetails.photos
@@ -53,7 +54,12 @@ const Modal = ({ placeDetails, onClose }) => {
       alert("請選擇日期和時間");
       return;
     }
-    const success = await addAttraction(placeDetails, tripDate, tripStartTime);
+    const success = await addAttraction(
+      journeyId,
+      placeDetails,
+      tripDate,
+      tripStartTime
+    );
     if (success) {
       onClose();
       alert("建立行程成功！");
@@ -119,6 +125,7 @@ const Modal = ({ placeDetails, onClose }) => {
 };
 
 Modal.propTypes = {
+  journeyId: PropTypes.string.isRequired,
   placeDetails: PropTypes.shape({
     name: PropTypes.string.isRequired,
     formatted_address: PropTypes.string.isRequired,

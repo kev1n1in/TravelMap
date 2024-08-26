@@ -3,9 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Modal from "./Modal";
-import JourneyCardDrawer from "./JourneyCardDrawer";
+import { useParams } from "react-router-dom";
+
 import attractionPin from "./img/bluePin.png";
-import { Button } from "@mui/material";
 
 const mapContainerStyle = {
   width: "100%",
@@ -16,11 +16,12 @@ const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
 
 const Map = () => {
+  const { id: journeyId } = useParams();
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   const queryClient = useQueryClient();
 
   const { isLoaded } = useJsApiLoader({
@@ -105,22 +106,11 @@ const Map = () => {
       </GoogleMap>
       {isModalOpen && (
         <Modal
+          journeyId={journeyId}
           placeDetails={placeDetails}
           onClose={() => setIsModalOpen(false)}
         />
       )}
-      <Button
-        variant="contained"
-        color="primary"
-        style={{ position: "absolute", top: "20px", right: "20px" }}
-        onClick={() => setIsDrawerOpen(true)}
-      >
-        Open Drawer
-      </Button>
-      <JourneyCardDrawer
-        open={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-      />
     </>
   );
 };

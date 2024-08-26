@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -6,24 +6,28 @@ import {
   Card,
   CardContent,
   Typography,
-  TextField,
   Button,
   Chip,
+  Skeleton,
+  Input,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { RingLoader } from "react-spinners";
 import {
   fetchUserDocuments,
-  handleCreateJourney,
   deleteJourney,
 } from "../../firebase/firebaseService";
 
 const Home = () => {
-  const [newTrip, setNewTrip] = useState({
-    title: "",
-    description: "",
-  });
-
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [filteredSearch, setFilteredSearch] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState(null);
 
   const {
     data,
@@ -39,17 +43,22 @@ const Home = () => {
     getNextPageParam: (lastPage) => lastPage?.lastVisible || undefined,
   });
 
-  const createMutation = useMutation({
-    mutationFn: ({ title, description }) =>
-      handleCreateJourney(title, description),
-    onSuccess: () => {
-      alert("行程創建成功！");
-      setNewTrip({ title: "", description: "" });
-    },
-    onError: () => {
-      alert("創建行程時出現錯誤");
-    },
-  });
+  useEffect(() => {
+    if (status === "success" && data) {
+      const allDocs = data.pages.flatMap((page) => page.usersList);
+      const filtered = allDocs.filter((doc) => {
+        return (
+          doc.title.toLowerCase().includes(search.toLowerCase()) ||
+          doc.description.toLowerCase().includes(search.toLowerCase())
+        );
+      });
+      setFilteredSearch(filtered);
+    }
+  }, [data, search, status]);
+
+  const handleSearchChange = (event) => {
+    setSearch(event.target.value);
+  };
 
   const deleteMutation = useMutation({
     mutationFn: deleteJourney,
@@ -61,33 +70,30 @@ const Home = () => {
     },
   });
 
-  const handleInputChange = (e) => {
-    setNewTrip({ ...newTrip, [e.target.name]: e.target.value });
+  const handleCardClick = (id) => {
+    navigate(`/journey/${id}`);
   };
 
-  const handleCreateTripClick = () => {
-    if (newTrip.title && newTrip.description) {
-      createMutation.mutate({
-        title: newTrip.title,
-        description: newTrip.description,
-      });
-    } else {
-      alert("請填寫所有必要的字段");
+  const handleOpenDialog = (docId) => {
+    setSelectedDoc(docId);
+    setOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedDoc) {
+      deleteMutation.mutate(selectedDoc);
     }
-  };
-
-  const handleCardClick = () => {
-    navigate(`/journey`);
+    setOpen(false);
   };
 
   useEffect(() => {
     const handleScroll = () => {
       const { scrollHeight, scrollTop, clientHeight } =
         document.documentElement;
-      console.log("Scroll Event Triggered");
-      console.log("scrollHeight:", scrollHeight);
-      console.log("scrollTop:", scrollTop);
-      console.log("clientHeight:", clientHeight);
 
       if (
         scrollHeight - scrollTop <= clientHeight + 200 &&
@@ -108,31 +114,11 @@ const Home = () => {
 
   return (
     <Container>
-      <Title>用戶列表</Title>
+      <Title>行程總覽</Title>
       <Form>
-        <TextField
-          label="行程名稱"
-          name="title"
-          value={newTrip.title}
-          onChange={handleInputChange}
-          fullWidth
-        />
-        <TextField
-          label="行程描述"
-          name="description"
-          value={newTrip.description}
-          onChange={handleInputChange}
-          fullWidth
-          multiline
-          rows={4}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleCreateTripClick}
-          disabled={createMutation.isLoading}
-        >
-          創建行程
+        <Input placeholder="搜尋行程" onChange={handleSearchChange} />
+        <Button variant="contained" color="primary" onClick={handleCardClick}>
+          新增行程
         </Button>
       </Form>
 
@@ -144,44 +130,99 @@ const Home = () => {
         <p>獲取用戶文檔時出錯: {error.message}</p>
       ) : (
         <GridContainer>
-          {data?.pages?.flatMap((page) =>
-            page.usersList.map((doc) => (
-              <Card
-                key={doc.id}
-                style={{ marginBottom: "10px", cursor: "pointer" }}
+          {filteredSearch.map((doc) => (
+            <Card
+              key={doc.id}
+              style={{ marginBottom: "10px", cursor: "pointer" }}
+              onClick={() => handleCardClick(doc.id)}
+            >
+              <CardContent
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                }}
               >
-                <CardContent>
-                  <div
-                    onClick={() => handleCardClick(doc.id)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <Typography variant="h6">
-                      {doc.title || "無標題"}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      {doc.description || "無描述"}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      User ID: {doc.user_id || "無 User ID"}
-                    </Typography>
-                  </div>
-                  <Chip
-                    label="刪除"
-                    onDelete={() => deleteMutation.mutate(doc.id)}
-                    color="secondary"
-                    style={{ marginTop: "10px" }}
+                {doc.journey &&
+                doc.journey.length > 0 &&
+                doc.journey[0].photos &&
+                doc.journey[0].photos.length > 0 ? (
+                  <img
+                    src={doc.journey[0].photos[0]}
+                    alt={doc.journey[0].name || "無標題"}
+                    style={{
+                      width: "100%",
+                      height: "140px",
+                      borderRadius: 4,
+                      objectFit: "cover",
+                    }}
                   />
-                </CardContent>
-              </Card>
-            ))
-          )}
+                ) : (
+                  <Skeleton
+                    variant="rectangular"
+                    width="100%"
+                    height={140}
+                    style={{ borderRadius: 4 }}
+                  />
+                )}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography variant="h6">{doc.title || "無標題"}</Typography>
+                  <Button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleOpenDialog(doc.id);
+                    }}
+                    style={{
+                      padding: 0,
+                      minWidth: "unset",
+                      background: "transparent",
+                    }}
+                  >
+                    <Chip
+                      label="刪除"
+                      style={{
+                        backgroundColor: "#ff6666",
+                        color: "#ffffff",
+                        marginTop: "10px",
+                      }}
+                    />
+                  </Button>
+                </div>
+                <Typography>我是時間</Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {doc.description || "無描述"}
+                </Typography>
+              </CardContent>
+            </Card>
+          ))}
+
           {isFetchingNextPage && (
             <LoaderWrapper>
-              <RingLoader color="#123abc" /> {/* 使用 RingLoader */}
+              <RingLoader color="#123abc" />
             </LoaderWrapper>
           )}
         </GridContainer>
       )}
+      <Dialog open={open} onClose={handleCloseDialog}>
+        <DialogTitle>確認刪除</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            您確定要刪除此行程嗎？此操作無法撤銷。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>取消</Button>
+          <Button onClick={handleConfirmDelete} color="secondary">
+            確定刪除
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

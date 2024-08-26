@@ -1,18 +1,24 @@
 import GoogleMap from "../SingleJourney/Map";
 import { styled } from "styled-components";
+import JourneyCardDrawer from "./JourneyCardDrawer";
+import { Button } from "@mui/material";
 import { useParams } from "react-router-dom";
 import { fetchAttraction } from "../../firebase/firebaseService";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 const SingleJourney = () => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { id } = useParams();
-  const [data, setData] = useState([]);
-  console.log("data", data);
+  const { data } = useQuery({
+    queryKey: ["attraction", id],
+    queryFn: () => fetchAttraction(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
 
-  useEffect(() => {
-    const attactions = fetchAttraction(id);
-    setData(attactions);
-  }, [id]);
+  console.log("data", data);
 
   return (
     <Container>
@@ -20,6 +26,18 @@ const SingleJourney = () => {
         <GoogleMap />
       </MapContainer>
       <ListContainer>{/* <List /> */}</ListContainer>
+      <Button
+        variant="contained"
+        color="primary"
+        style={{ position: "absolute", top: "20px", right: "20px" }}
+        onClick={() => setIsDrawerOpen(true)}
+      >
+        Open Drawer
+      </Button>
+      <JourneyCardDrawer
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+      />
     </Container>
   );
 };

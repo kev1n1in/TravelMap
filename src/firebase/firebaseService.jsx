@@ -63,10 +63,24 @@ export async function fetchUserDocuments({ pageParam = null, limit = 6 }) {
 
     const querySnapshot = await getDocs(q);
 
-    const usersList = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const usersList = [];
+
+    for (const doc of querySnapshot.docs) {
+      // Fetch the journey subcollection for each document
+      const journeyCollectionRef = collection(doc.ref, "journey");
+      const journeySnapshot = await getDocs(journeyCollectionRef);
+
+      const journeyData = journeySnapshot.docs.map((journeyDoc) => ({
+        id: journeyDoc.id,
+        ...journeyDoc.data(),
+      }));
+
+      usersList.push({
+        id: doc.id,
+        ...doc.data(),
+        journey: journeyData, // Attach the journey subcollection data
+      });
+    }
 
     const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
 
@@ -80,11 +94,11 @@ export async function fetchUserDocuments({ pageParam = null, limit = 6 }) {
   }
 }
 
-// 獲取用戶的所有行程
-export const fetchTrips = async (userId) => {
+export const handleCreateTrip = async (placeDetail, date, startTime) => {
   try {
+    const userId = localStorage.getItem("userId");
     if (!userId) {
-      throw new Error("User ID is required");
+      throw new Error("User ID not found in localStorage");
     }
 
     const usersCollectionRef = collection(db, "journeys");
@@ -97,18 +111,43 @@ export const fetchTrips = async (userId) => {
 
     const userDocRef = querySnapshot.docs[0].ref;
 
-    const tripsCollectionRef = collection(userDocRef, "trips");
-    const tripSnapshot = await getDocs(tripsCollectionRef);
-    const tripsList = tripSnapshot.docs.map((doc) => ({
+    const photos = placeDetail.photos
+      ? placeDetail.photos.map((photo) => photo.getUrl())
+      : [];
+
+    const tripsCollectionRef = collection(userDocRef, "journey");
+
+    await addDoc(tripsCollectionRef, {
+      name: placeDetail.name,
+      address: placeDetail.formatted_address,
+      place_id: placeDetail.place_id,
+      photos: photos,
+      date: date,
+      startTime: startTime,
+    });
+
+    console.log("New attraction added successfully!");
+  } catch (error) {
+    console.error("Error adding place to Firestore:", error);
+  }
+};
+
+export const fetchJourney = async (journeyId) => {
+  try {
+    const journeyDocRef = doc(db, "journeys", journeyId);
+    const journeyCollectionRef = collection(journeyDocRef, "journey");
+    const journeySnapshot = await getDocs(journeyCollectionRef);
+    const journeyList = journeySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
-    return tripsList;
+    return journeyList;
   } catch (error) {
-    console.error("Error fetching trips:", error);
-    throw new Error("Failed to fetch trips");
+    console.error("Error fetching journeys:", error);
+    throw new Error("Failed to fetch journeys");
   }
 };
+
 export const deleteJourney = async (journeyId) => {
   try {
     const journeyDocRef = doc(db, "journeys", journeyId);
@@ -137,13 +176,25 @@ export const fetchAttraction = async (journeyId) => {
   }
 };
 
-export const addAttraction = async (placeDetail, tripDate, tripStartTime) => {
+export const addAttraction = async (
+  journeyId,
+  placeDetail,
+  tripDate,
+  tripStartTime
+) => {
   try {
     console.log("placeDetail", placeDetail);
     const photos = placeDetail.photos
       ? placeDetail.photos.map((photo) => photo.getUrl())
       : [];
-    await addDoc(collection(db, "users/NOSTuSs6OBCunlMBm6oF/trips"), {
+
+    // 使用傳入的 journeyId 構建路徑
+    const journeyCollectionRef = collection(
+      db,
+      `journeys/${journeyId}/journey`
+    );
+
+    await addDoc(journeyCollectionRef, {
       name: placeDetail.name,
       address: placeDetail.formatted_address,
       place_id: placeDetail.place_id,
@@ -151,6 +202,8 @@ export const addAttraction = async (placeDetail, tripDate, tripStartTime) => {
       date: dayjs(tripDate).format("YYYY-MM-DD"),
       startTime: dayjs(tripStartTime).format("HH:mm"),
     });
+
+    console.log("New attraction added successfully!");
     return true;
   } catch (error) {
     console.error("Error adding place to Firestore:", error);
