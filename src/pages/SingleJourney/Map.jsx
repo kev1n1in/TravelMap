@@ -3,9 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { useQuery } from "@tanstack/react-query";
 import Modal from "./Modal";
-import JourneyCardDrawer from "./JourneyCardDrawer";
+// import { useParams } from "react-router-dom";
 import attractionPin from "./img/bluePin.png";
-import { Button } from "@mui/material";
 import styled from "styled-components";
 import SearchImg from "../SingleJourney/img/search.png";
 
@@ -17,12 +16,11 @@ const mapContainerStyle = {
 const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
 
-const Map = () => {
+const Map = ({ journeyId }) => {
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: API_KEY,
@@ -106,6 +104,7 @@ const Map = () => {
       </GoogleMap>
       {isModalOpen && (
         <Modal
+          journeyId={journeyId}
           placeDetails={placeDetails}
           onClose={() => setIsModalOpen(false)}
         />
@@ -114,18 +113,6 @@ const Map = () => {
         <SearchIcon src={SearchImg} />
         搜尋此區域景點
       </SearchButton>
-      <Button
-        variant="contained"
-        color="primary"
-        style={{ position: "absolute", top: "20px", right: "20px" }}
-        onClick={() => setIsDrawerOpen(true)}
-      >
-        Open Drawer
-      </Button>
-      <JourneyCardDrawer
-        open={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-      />
     </>
   );
 };
