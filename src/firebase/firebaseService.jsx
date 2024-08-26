@@ -160,22 +160,6 @@ export const deleteJourney = async (journeyId) => {
   }
 };
 
-export const fetchAttraction = async (journeyId) => {
-  try {
-    const attractionDocRef = collection(db, "journeys", journeyId, "journey");
-    const querySnapShot = await getDocs(attractionDocRef);
-
-    const attractionsData = querySnapShot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    console.log("data", attractionsData);
-    return attractionsData;
-  } catch (error) {
-    console.log("Error fetching journey", error);
-  }
-};
-
 export const addAttraction = async (
   journeyId,
   placeDetail,
@@ -187,8 +171,6 @@ export const addAttraction = async (
     const photos = placeDetail.photos
       ? placeDetail.photos.map((photo) => photo.getUrl())
       : [];
-
-    // 使用傳入的 journeyId 構建路徑
     const journeyCollectionRef = collection(
       db,
       `journeys/${journeyId}/journey`
