@@ -24,7 +24,7 @@ export const handleCreateJourney = async (title, description) => {
       throw new Error("Title or Description cannot be empty");
     }
 
-    const usersCollectionRef = collection(db, "users");
+    const usersCollectionRef = collection(db, "journeys");
     const newDocRef = doc(usersCollectionRef);
 
     await setDoc(newDocRef, {
@@ -34,7 +34,7 @@ export const handleCreateJourney = async (title, description) => {
     });
 
     console.log("New journey document created with ID:", newDocRef.id);
-    alert("新行程已成功创建！");
+    alert("新行程已成功創建！");
   } catch (error) {
     console.error("Error creating journey document:", error);
     alert("出了一點問題：" + error.message);
@@ -43,7 +43,7 @@ export const handleCreateJourney = async (title, description) => {
 
 export async function fetchUserDocuments({ pageParam = null, limit = 6 }) {
   try {
-    const usersCollectionRef = collection(db, "users");
+    const usersCollectionRef = collection(db, "journeys");
 
     let q = query(
       usersCollectionRef,
@@ -62,10 +62,24 @@ export async function fetchUserDocuments({ pageParam = null, limit = 6 }) {
 
     const querySnapshot = await getDocs(q);
 
-    const usersList = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const usersList = [];
+
+    for (const doc of querySnapshot.docs) {
+      // Fetch the journey subcollection for each document
+      const journeyCollectionRef = collection(doc.ref, "journey");
+      const journeySnapshot = await getDocs(journeyCollectionRef);
+
+      const journeyData = journeySnapshot.docs.map((journeyDoc) => ({
+        id: journeyDoc.id,
+        ...journeyDoc.data(),
+      }));
+
+      usersList.push({
+        id: doc.id,
+        ...doc.data(),
+        journey: journeyData, // Attach the journey subcollection data
+      });
+    }
 
     const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
 
@@ -86,7 +100,7 @@ export const handleCreateTrip = async (placeDetail, date, startTime) => {
       throw new Error("User ID not found in localStorage");
     }
 
-    const usersCollectionRef = collection(db, "users");
+    const usersCollectionRef = collection(db, "journeys");
     const userQuery = query(usersCollectionRef, where("user_id", "==", userId));
     const querySnapshot = await getDocs(userQuery);
 
@@ -100,7 +114,7 @@ export const handleCreateTrip = async (placeDetail, date, startTime) => {
       ? placeDetail.photos.map((photo) => photo.getUrl())
       : [];
 
-    const tripsCollectionRef = collection(userDocRef, "trips");
+    const tripsCollectionRef = collection(userDocRef, "journey");
 
     await addDoc(tripsCollectionRef, {
       name: placeDetail.name,
@@ -117,38 +131,25 @@ export const handleCreateTrip = async (placeDetail, date, startTime) => {
   }
 };
 
-// 獲取用戶的所有行程
-export const fetchTrips = async (userId) => {
+export const fetchJourney = async () => {
   try {
-    if (!userId) {
-      throw new Error("User ID is required");
-    }
-
-    const usersCollectionRef = collection(db, "users");
-    const userQuery = query(usersCollectionRef, where("user_id", "==", userId));
-    const querySnapshot = await getDocs(userQuery);
-
-    if (querySnapshot.empty) {
-      throw new Error("No user documents found for the given user ID");
-    }
-
-    const userDocRef = querySnapshot.docs[0].ref;
-
-    const tripsCollectionRef = collection(userDocRef, "trips");
-    const tripSnapshot = await getDocs(tripsCollectionRef);
-    const tripsList = tripSnapshot.docs.map((doc) => ({
+    const journeyDocRef = doc(db, "journeys", "8BtJvS0MAZXfiJs5qq74");
+    const journeyCollectionRef = collection(journeyDocRef, "journey");
+    const journeySnapshot = await getDocs(journeyCollectionRef);
+    const journeyList = journeySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
-    return tripsList;
+    return journeyList;
   } catch (error) {
-    console.error("Error fetching trips:", error);
-    throw new Error("Failed to fetch trips");
+    console.error("Error fetching journeys:", error);
+    throw new Error("Failed to fetch journeys");
   }
 };
+
 export const deleteJourney = async (journeyId) => {
   try {
-    const journeyDocRef = doc(db, "users", journeyId);
+    const journeyDocRef = doc(db, "journeys", journeyId);
 
     await deleteDoc(journeyDocRef);
     console.log("Journey deleted successfully!");
