@@ -3,29 +3,29 @@ import { styled } from "styled-components";
 import JourneyCardDrawer from "./JourneyCardDrawer";
 import { Button } from "@mui/material";
 import { useParams } from "react-router-dom";
-import { fetchAttraction } from "../../firebase/firebaseService";
+import { fetchJourney } from "../../firebase/firebaseService";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 const SingleJourney = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { id } = useParams();
-  const { data } = useQuery({
-    queryKey: ["attraction", id],
-    queryFn: () => fetchAttraction(id),
-    enabled: !!id,
-    staleTime: 1000 * 60 * 5,
-    retry: false,
-  });
+  const { id: journeyId } = useParams();
 
-  console.log("data", data);
+  const {
+    data: journeys,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["journeys", journeyId],
+    queryFn: () => fetchJourney(journeyId),
+    onSuccess: (data) => console.log("Fetched journeys:", data),
+  });
 
   return (
     <Container>
       <MapContainer>
-        <GoogleMap />
+        <GoogleMap journeyId={journeyId} />
       </MapContainer>
-      <ListContainer>{/* <List /> */}</ListContainer>
       <Button
         variant="contained"
         color="primary"
@@ -35,6 +35,9 @@ const SingleJourney = () => {
         Open Drawer
       </Button>
       <JourneyCardDrawer
+        journeys={journeys}
+        isLoading={isLoading}
+        error={error}
         open={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
       />
@@ -53,5 +56,3 @@ const Container = styled.div`
 const MapContainer = styled.div`
   width: 100%;
 `;
-
-const ListContainer = styled.div``;

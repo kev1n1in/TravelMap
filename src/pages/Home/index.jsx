@@ -70,10 +70,6 @@ const Home = () => {
     },
   });
 
-  const handleCardClick = (id) => {
-    navigate(`/journey/${id}`);
-  };
-
   const handleOpenDialog = (docId) => {
     setSelectedDoc(docId);
     setOpen(true);
@@ -87,6 +83,10 @@ const Home = () => {
     if (selectedDoc) {
       deleteMutation.mutate(selectedDoc);
     }
+  };
+
+  const handleCardClick = (id) => {
+    navigate(`/journey/${id}`);
     setOpen(false);
   };
 

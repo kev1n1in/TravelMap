@@ -1,29 +1,26 @@
 import PropTypes from "prop-types";
-import { useNavigate, useParams } from "react-router-dom"; // 引入 useParams
+import { useNavigate } from "react-router-dom"; // 引入 useParams
 import Drawer from "@mui/material/Drawer";
 import Typography from "@mui/material/Typography";
 import { Box, TextField, Button } from "@mui/material";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import {
-  fetchJourney,
-  handleCreateJourney,
-} from "../../firebase/firebaseService";
+import { useMutation } from "@tanstack/react-query";
+import { handleCreateJourney } from "../../firebase/firebaseService";
 import { useState } from "react";
 import styled from "styled-components";
 
-const JourneyCardDrawer = () => {
+const JourneyCardDrawer = ({ journeys, isLoading, error }) => {
   const navigate = useNavigate();
-  const { id: journeyId } = useParams();
+  // const { id: journeyId } = useParams();
 
-  const {
-    data: journeys,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["journeys", journeyId],
-    queryFn: () => fetchJourney(journeyId),
-    onSuccess: (data) => console.log("Fetched journeys:", data),
-  });
+  // const {
+  //   data: journeys,
+  //   isLoading,
+  //   error,
+  // } = useQuery({
+  //   queryKey: ["journeys", journeyId],
+  //   queryFn: () => fetchJourney(journeyId),
+  //   onSuccess: (data) => console.log("Fetched journeys:", data),
+  // });
 
   const groupedJourneys = journeys?.reduce((acc, journey) => {
     const date = new Date(journey.date).toDateString();
