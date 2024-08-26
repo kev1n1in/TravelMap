@@ -76,8 +76,8 @@ const Home = () => {
     }
   };
 
-  const handleCardClick = () => {
-    navigate(`/journey`);
+  const handleCardClick = (id) => {
+    navigate(`/journey/${id}`);
   };
 
   useEffect(() => {
