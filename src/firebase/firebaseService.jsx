@@ -12,6 +12,7 @@ import {
   limit as firestoreLimit,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
+import dayjs from "dayjs";
 
 export const handleCreateJourney = async (title, description) => {
   try {
@@ -131,9 +132,9 @@ export const handleCreateTrip = async (placeDetail, date, startTime) => {
   }
 };
 
-export const fetchJourney = async () => {
+export const fetchJourney = async (journeyId) => {
   try {
-    const journeyDocRef = doc(db, "journeys", "8BtJvS0MAZXfiJs5qq74");
+    const journeyDocRef = doc(db, "journeys", journeyId);
     const journeyCollectionRef = collection(journeyDocRef, "journey");
     const journeySnapshot = await getDocs(journeyCollectionRef);
     const journeyList = journeySnapshot.docs.map((doc) => ({
@@ -156,5 +157,56 @@ export const deleteJourney = async (journeyId) => {
   } catch (error) {
     console.error("Error deleting journey document:", error);
     throw new Error("Failed to delete journey");
+  }
+};
+
+export const fetchAttraction = async (journeyId) => {
+  try {
+    const attractionDocRef = collection(db, "journeys", journeyId, "journey");
+    const querySnapShot = await getDocs(attractionDocRef);
+
+    const attractionsData = querySnapShot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    console.log("data", attractionsData);
+    return attractionsData;
+  } catch (error) {
+    console.log("Error fetching journey", error);
+  }
+};
+
+export const addAttraction = async (
+  journeyId,
+  placeDetail,
+  tripDate,
+  tripStartTime
+) => {
+  try {
+    console.log("placeDetail", placeDetail);
+    const photos = placeDetail.photos
+      ? placeDetail.photos.map((photo) => photo.getUrl())
+      : [];
+
+    // 使用傳入的 journeyId 構建路徑
+    const journeyCollectionRef = collection(
+      db,
+      `journeys/${journeyId}/journey`
+    );
+
+    await addDoc(journeyCollectionRef, {
+      name: placeDetail.name,
+      address: placeDetail.formatted_address,
+      place_id: placeDetail.place_id,
+      photos: photos,
+      date: dayjs(tripDate).format("YYYY-MM-DD"),
+      startTime: dayjs(tripStartTime).format("HH:mm"),
+    });
+
+    console.log("New attraction added successfully!");
+    return true;
+  } catch (error) {
+    console.error("Error adding place to Firestore:", error);
+    return false;
   }
 };

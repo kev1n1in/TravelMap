@@ -1,24 +1,27 @@
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom"; // 引入 useParams
 import Drawer from "@mui/material/Drawer";
 import Typography from "@mui/material/Typography";
 import { Box, TextField, Button } from "@mui/material";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { fetchJourney } from "../../firebase/firebaseService";
+import {
+  fetchJourney,
+  handleCreateJourney,
+} from "../../firebase/firebaseService";
 import { useState } from "react";
-import { handleCreateJourney } from "../../firebase/firebaseService";
 import styled from "styled-components";
 
 const JourneyCardDrawer = ({ open, onClose }) => {
   const navigate = useNavigate();
+  const { id: journeyId } = useParams(); // 取得 URL 中的 journeyId
 
   const {
     data: journeys,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["journeys"],
-    queryFn: fetchJourney,
+    queryKey: ["journeys", journeyId], // 使用 journeyId 作為查詢鍵的一部分
+    queryFn: () => fetchJourney(journeyId), // 將 journeyId 傳遞給查詢函數
     onSuccess: (data) => console.log("Fetched journeys:", data),
   });
 
@@ -30,10 +33,6 @@ const JourneyCardDrawer = ({ open, onClose }) => {
     acc[date].push(journey);
     return acc;
   }, {});
-
-  const handleGoBack = () => {
-    navigate("/home");
-  };
 
   const [newJourney, setNewJourney] = useState({
     title: "",
@@ -56,6 +55,7 @@ const JourneyCardDrawer = ({ open, onClose }) => {
       handleCreateJourney(title, description),
     onSuccess: () => {
       alert("行程創建成功！");
+      setNewJourney({ title: "", description: "" }); // 重置表單
     },
     onError: () => {
       alert("創建行程時出現錯誤");
@@ -64,6 +64,10 @@ const JourneyCardDrawer = ({ open, onClose }) => {
 
   const handleInputChange = (e) => {
     setNewJourney({ ...newJourney, [e.target.name]: e.target.value });
+  };
+
+  const handleGoBack = () => {
+    navigate("/home");
   };
 
   return (
@@ -114,17 +118,12 @@ const JourneyCardDrawer = ({ open, onClose }) => {
               <Box key={date} mb={2}>
                 <Typography variant="h6">{date}</Typography>
                 {groupedJourneys[date].map((journey) => (
-                  <Box key={journey.id} mb={2} ml={2}>
+                  <JourneyCard key={journey.id}>
                     {journey.photos && journey.photos.length > 0 && (
                       <Box mb={1}>
-                        <img
+                        <JourneyImage
                           src={journey.photos[0]}
                           alt={journey.name || ""}
-                          style={{
-                            width: "100%",
-                            height: "auto",
-                            borderRadius: 4,
-                          }}
                         />
                       </Box>
                     )}
@@ -134,7 +133,7 @@ const JourneyCardDrawer = ({ open, onClose }) => {
                     <Typography variant="body2">
                       {journey.startTime || ""}
                     </Typography>
-                  </Box>
+                  </JourneyCard>
                 ))}
               </Box>
             ))
@@ -162,7 +161,6 @@ JourneyCardDrawer.propTypes = {
 
 const TypeWrapper = styled.div`
   position: fixed;
-  top: 0;
   background: white;
   z-index: 1200;
   padding: 16px;
@@ -170,6 +168,21 @@ const TypeWrapper = styled.div`
 
 const ContentWrapper = styled.div`
   margin-top: 320px;
+  max-height: calc(100vh - 320px);
+  padding-right: 16px;
+`;
+
+const JourneyCard = styled(Box)`
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 16px;
+`;
+
+const JourneyImage = styled.img`
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
 `;
 
 export default JourneyCardDrawer;

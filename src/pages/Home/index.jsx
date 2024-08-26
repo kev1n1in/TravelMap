@@ -70,8 +70,8 @@ const Home = () => {
     },
   });
 
-  const handleCardClick = () => {
-    navigate(`/journey`);
+  const handleCardClick = (id) => {
+    navigate(`/journey/${id}`);
   };
 
   const handleOpenDialog = (docId) => {
@@ -134,7 +134,7 @@ const Home = () => {
             <Card
               key={doc.id}
               style={{ marginBottom: "10px", cursor: "pointer" }}
-              onClick={handleCardClick}
+              onClick={() => handleCardClick(doc.id)}
             >
               <CardContent
                 style={{
