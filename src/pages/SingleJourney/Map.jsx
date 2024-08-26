@@ -1,11 +1,13 @@
-import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import { useCallback, useEffect, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Modal from "./Modal";
 import JourneyCardDrawer from "./JourneyCardDrawer";
 import attractionPin from "./img/bluePin.png";
 import { Button } from "@mui/material";
+import styled from "styled-components";
+import SearchImg from "../SingleJourney/img/search.png";
 
 const mapContainerStyle = {
   width: "100%",
@@ -21,21 +23,25 @@ const Map = () => {
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: API_KEY,
     libraries,
   });
 
-  const { data: places } = useQuery({
+  const { data: places, refetch } = useQuery({
     queryKey: ["places", center],
     queryFn: () => fetchPlaces(map, center),
-    enabled: !!map && !!center,
+    enabled: false,
     staleTime: 1000 * 60 * 5,
     retry: false,
   });
 
+  const handleSearchClick = () => {
+    refetch();
+  };
+
+  console.log("places", places);
   const { data: placeDetails } = useQuery({
     queryKey: ["placeDetails", selectedPlace?.place_id],
     queryFn: () => fetchPlaceDetails(map, selectedPlace.place_id),
@@ -44,26 +50,12 @@ const Map = () => {
     retry: false,
   });
 
-  const handleMapLoad = useCallback(
-    (mapInstance) => {
-      setMap(mapInstance);
-      if (center) {
-        queryClient.invalidateQueries({ queryKey: ["places"] });
-      }
-    },
-    [center, queryClient]
-  );
-
-  const handleMarkerClick = (place) => {
-    setSelectedPlace(place);
-    setIsModalOpen(true);
-  };
-
-  const handleMapUnmount = useCallback(() => {
-    setMap(null);
+  const handleMapLoad = useCallback((mapInstance) => {
+    setMap(mapInstance);
   }, []);
 
   useEffect(() => {
+    console.log("Fetching user location");
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -74,6 +66,15 @@ const Map = () => {
         console.error("Error getting user's location:", error);
       }
     );
+  }, []);
+
+  const handleMarkerClick = (place) => {
+    setSelectedPlace(place);
+    setIsModalOpen(true);
+  };
+
+  const handleMapUnmount = useCallback(() => {
+    setMap(null);
   }, []);
 
   if (!isLoaded) return <div>Loading...</div>;
@@ -109,6 +110,10 @@ const Map = () => {
           onClose={() => setIsModalOpen(false)}
         />
       )}
+      <SearchButton onClick={handleSearchClick}>
+        <SearchIcon src={SearchImg} />
+        搜尋此區域景點
+      </SearchButton>
       <Button
         variant="contained"
         color="primary"
@@ -126,3 +131,26 @@ const Map = () => {
 };
 
 export default Map;
+
+const SearchButton = styled.button`
+  color: #2d4057;
+  width: 180px;
+  height: 44px;
+  background-color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 10px;
+  border-radius: 50px;
+  font-size: 16px;
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+`;
+
+const SearchIcon = styled.img`
+  width: 24px;
+  height: 24px;
+`;

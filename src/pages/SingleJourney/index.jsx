@@ -1,18 +1,21 @@
 import GoogleMap from "../SingleJourney/Map";
 import { styled } from "styled-components";
-import { useParams } from "react-router-dom";
-import { fetchAttraction } from "../../firebase/firebaseService";
-import { useEffect, useState } from "react";
+// import { useParams } from "react-router-dom";
+// import { fetchAttraction } from "../../firebase/firebaseService";
+// import { useQuery } from "@tanstack/react-query";
 
 const SingleJourney = () => {
-  const { id } = useParams();
-  const [data, setData] = useState([]);
-  console.log("data", data);
+  // const { id } = useParams();
 
-  useEffect(() => {
-    const attactions = fetchAttraction(id);
-    setData(attactions);
-  }, [id]);
+  // const { data } = useQuery({
+  //   queryKey: ["attraction", id],
+  //   queryFn: () => fetchAttraction(id),
+  //   enabled: !!id,
+  //   staleTime: 1000 * 60 * 5,
+  //   retry: false,
+  // });
+
+  // console.log("data", data);
 
   return (
     <Container>

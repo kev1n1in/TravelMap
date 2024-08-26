@@ -143,7 +143,7 @@ export const addAttraction = async (placeDetail, tripDate, tripStartTime) => {
     const photos = placeDetail.photos
       ? placeDetail.photos.map((photo) => photo.getUrl())
       : [];
-    await addDoc(collection(db, "users/NOSTuSs6OBCunlMBm6oF/trips"), {
+    await addDoc(collection(db, "journeys/TxvnjCvDO3r43ZusrxmZ/journey"), {
       name: placeDetail.name,
       address: placeDetail.formatted_address,
       place_id: placeDetail.place_id,
