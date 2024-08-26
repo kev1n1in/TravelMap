@@ -11,17 +11,17 @@ import {
 import { useState } from "react";
 import styled from "styled-components";
 
-const JourneyCardDrawer = ({ open, onClose }) => {
+const JourneyCardDrawer = () => {
   const navigate = useNavigate();
-  const { id: journeyId } = useParams(); // 取得 URL 中的 journeyId
+  const { id: journeyId } = useParams();
 
   const {
     data: journeys,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["journeys", journeyId], // 使用 journeyId 作為查詢鍵的一部分
-    queryFn: () => fetchJourney(journeyId), // 將 journeyId 傳遞給查詢函數
+    queryKey: ["journeys", journeyId],
+    queryFn: () => fetchJourney(journeyId),
     onSuccess: (data) => console.log("Fetched journeys:", data),
   });
 
@@ -72,9 +72,8 @@ const JourneyCardDrawer = ({ open, onClose }) => {
 
   return (
     <Drawer
+      variant="permanent" // 設定為 permanent drawer
       anchor="right"
-      open={open}
-      onClose={onClose}
       PaperProps={{ style: { width: 300 } }}
     >
       <Box p={2}>
@@ -167,7 +166,7 @@ const TypeWrapper = styled.div`
 `;
 
 const ContentWrapper = styled.div`
-  margin-top: 320px;
+  margin-top: 330px;
   max-height: calc(100vh - 320px);
   padding-right: 16px;
 `;
