@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createTrip } from "../../firebase/firebaseService";
+import { addAttraction } from "../../firebase/firebaseService";
 import PropTypes from "prop-types";
 import { styled } from "styled-components";
 import closeImg from "./img/close.png";
@@ -53,7 +53,7 @@ const Modal = ({ placeDetails, onClose }) => {
       alert("請選擇日期和時間");
       return;
     }
-    const success = await createTrip(placeDetails, tripDate, tripStartTime);
+    const success = await addAttraction(placeDetails, tripDate, tripStartTime);
     if (success) {
       onClose();
       alert("建立行程成功！");
