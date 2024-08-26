@@ -3,7 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Modal from "./Modal";
+import JourneyCardDrawer from "./JourneyCardDrawer";
 import attractionPin from "./img/bluePin.png";
+import { Button } from "@mui/material";
 
 const mapContainerStyle = {
   width: "100%",
@@ -18,6 +20,7 @@ const Map = () => {
   const [center, setCenter] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { isLoaded } = useJsApiLoader({
@@ -36,7 +39,7 @@ const Map = () => {
   const { data: placeDetails } = useQuery({
     queryKey: ["placeDetails", selectedPlace?.place_id],
     queryFn: () => fetchPlaceDetails(map, selectedPlace.place_id),
-    enable: !!selectedPlace,
+    enabled: !!selectedPlace,
     staleTime: 1000 * 60 * 5,
     retry: false,
   });
@@ -74,6 +77,7 @@ const Map = () => {
   }, []);
 
   if (!isLoaded) return <div>Loading...</div>;
+
   return (
     <>
       <GoogleMap
@@ -105,6 +109,18 @@ const Map = () => {
           onClose={() => setIsModalOpen(false)}
         />
       )}
+      <Button
+        variant="contained"
+        color="primary"
+        style={{ position: "absolute", top: "20px", right: "20px" }}
+        onClick={() => setIsDrawerOpen(true)}
+      >
+        Open Drawer
+      </Button>
+      <JourneyCardDrawer
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+      />
     </>
   );
 };
