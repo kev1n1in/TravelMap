@@ -9,6 +9,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import dayjs from "dayjs";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 const Modal = ({
   journeyId,
@@ -24,6 +26,7 @@ const Modal = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
@@ -33,8 +36,6 @@ const Modal = ({
       setPhotoUrls(urls);
     }
   }, [placeDetails]);
-  if (!placeDetails) return null;
-  const photos = placeDetails.photos || [];
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % photoUrls.length);
@@ -47,24 +48,40 @@ const Modal = ({
     );
   };
 
-  const handleCreate = async () => {
+  const mutation = useMutation({
+    mutationFn: async (newAttraction) => {
+      await addAttraction(
+        newAttraction.journeyId,
+        newAttraction.placeDetails,
+        newAttraction.tripDate,
+        newAttraction.tripStartTime
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["journeys", journeyId]);
+      alert("建立行程成功！");
+    },
+    onError: (error) => {
+      alert("建立行程失敗，請重試");
+      console.error("Error:", error);
+    },
+  });
+
+  const handleCreate = () => {
     if (!tripDate || !tripStartTime) {
       alert("請選擇日期和時間");
       return;
     }
-    const success = await addAttraction(
+
+    mutation.mutate({
       journeyId,
       placeDetails,
       tripDate,
-      tripStartTime
-    );
-    if (success) {
-      onClose();
-      alert("建立行程成功！");
-    } else {
-      alert("建立行程失敗，請重試");
-    }
+      tripStartTime,
+    });
   };
+  if (!placeDetails) return null;
+  const photos = placeDetails.photos || [];
 
   return (
     <ModalOverlay>
@@ -141,8 +158,8 @@ Modal.propTypes = {
   onUpdate: PropTypes.func,
   onChangeDate: PropTypes.func,
   onChangeTime: PropTypes.func,
-  tripDate: PropTypes.instanceOf(Date),
-  tripStartTime: PropTypes.instanceOf(Date),
+  tripDate: PropTypes.instanceOf(dayjs),
+  tripStartTime: PropTypes.instanceOf(dayjs),
 };
 
 export default Modal;

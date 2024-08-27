@@ -1,4 +1,9 @@
-import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  useJsApiLoader,
+  MarkerF,
+  Polyline,
+} from "@react-google-maps/api";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { fetchJourney } from "../../firebase/firebaseService";
@@ -40,7 +45,7 @@ const Map = () => {
   );
 
   const {
-    data: journeys,
+    data: journeysData,
     isLoading,
     error,
   } = useQuery({
@@ -49,13 +54,13 @@ const Map = () => {
     onSuccess: (data) => console.log("Fetched journeys:", data),
   });
 
-  console.log("journeys", journeys);
+  console.log("journeys", journeysData);
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: API_KEY,
     libraries,
   });
 
-  const { data: places, refetch } = useQuery({
+  const { data: places, refetch: refetchPlace } = useQuery({
     queryKey: ["places", center],
     queryFn: () => fetchPlaces(map, center),
     enabled: false,
@@ -63,8 +68,25 @@ const Map = () => {
     retry: false,
   });
 
+  const getPolyLinePath = () => {
+    if (!Array.isArray(journeysData)) {
+      return [];
+    }
+    return journeysData.map((journey) => ({
+      lat: journey.lat ?? 0,
+      lng: journey.lng ?? 0,
+    }));
+  };
+
+  const polylinePath = getPolyLinePath();
+
   const handleSearchClick = () => {
-    refetch();
+    const mapCenter = map.getCenter();
+    setCenter({
+      lat: mapCenter.lat(),
+      lng: mapCenter.lng(),
+    });
+    refetchPlace();
   };
 
   const { data: placeDetails } = useQuery({
@@ -93,12 +115,10 @@ const Map = () => {
   }, []);
 
   const handleMarkerClick = (data, isJourney) => {
+    if (!journeyId) {
+      alert("請先填寫行程名稱和描述");
+    }
     const modalType = isJourney ? "update" : "create";
-    console.log("Dispatching action:", {
-      type: modalActionTypes.OPEN_MODAL,
-      payload: { modalType, data },
-    });
-
     dispatch({
       type: modalActionTypes.OPEN_MODAL,
       payload: { modalType, data: data },
@@ -163,6 +183,7 @@ const Map = () => {
     <Container>
       <MapContainer>
         <GoogleMap
+          onClick={getPolyLinePath}
           mapContainerStyle={mapContainerStyle}
           center={center}
           zoom={13}
@@ -170,17 +191,27 @@ const Map = () => {
           onLoad={handleMapLoad}
           onUnmount={handleMapUnmount}
         >
+          {polylinePath.length > 1 && (
+            <Polyline
+              path={polylinePath}
+              options={{
+                strokeColor: "#FF0000",
+                strokeOpacity: 2.0,
+                strokeWeight: 2,
+              }}
+            />
+          )}
           {places?.map((place) => {
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
-            const isInJourneys = journeys?.some(
+            const isInJourneys = journeysData?.some(
               (journey) => journey.lat === lat && journey.lng === lng
             );
             return (
               <MarkerF
                 key={place.place_id}
                 position={{ lat: lat, lng: lng }}
-                onClick={() => handleMarkerClick(place, false)}
+                onClick={() => handleMarkerClick(place, isInJourneys)}
                 icon={{
                   url: isInJourneys ? redPin : bluePin,
                   scaledSize: new window.google.maps.Size(40, 40),
@@ -188,7 +219,7 @@ const Map = () => {
               />
             );
           })}
-          {journeys?.map((journey) => (
+          {journeysData?.map((journey) => (
             <MarkerF
               key={journey.id}
               position={{ lat: journey.lat, lng: journey.lng }}
@@ -212,6 +243,8 @@ const Map = () => {
             onChangeTime={handleTimeChange}
             tripDate={tripDate}
             tripStartTime={tripStartTime}
+            isLoading={isLoading}
+            error={error}
           />
         )}
         <SearchButton onClick={handleSearchClick}>
@@ -221,7 +254,7 @@ const Map = () => {
       </MapContainer>
       <CardsContainer>
         <JourneyList
-          journeys={journeys}
+          journeys={journeysData}
           isLoading={isLoading}
           error={error}
           onUpdate={handleUpdate}

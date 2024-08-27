@@ -141,6 +141,7 @@ JourneyList.propTypes = {
     PropTypes.shape({
       id: PropTypes.string,
       name: PropTypes.string,
+      photos: PropTypes.array,
     })
   ).isRequired,
   isLoading: PropTypes.bool.isRequired,

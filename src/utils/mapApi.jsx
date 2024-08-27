@@ -10,7 +10,13 @@ export const fetchPlaces = (mapInstance, center) => {
 
     service.nearbySearch(request, (results, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-        resolve(results);
+        const processedResults = results.map((place) => {
+          const isOpenNow = place.opening_hours?.isOpen
+            ? place.opening_hours.isOpen()
+            : null;
+          return { ...place, isOpenNow };
+        });
+        resolve(processedResults);
       } else {
         reject(status);
       }

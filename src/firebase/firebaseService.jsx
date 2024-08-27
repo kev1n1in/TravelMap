@@ -93,44 +93,6 @@ export async function fetchUserJourneys(
   }
 }
 
-// export const handleCreateTrip = async (placeDetail, date, startTime) => {
-//   try {
-//     const userId = localStorage.getItem("userId");
-//     if (!userId) {
-//       throw new Error("User ID not found in localStorage");
-//     }
-
-//     const usersCollectionRef = collection(db, "journeys");
-//     const userQuery = query(usersCollectionRef, where("user_id", "==", userId));
-//     const querySnapshot = await getDocs(userQuery);
-
-//     if (querySnapshot.empty) {
-//       throw new Error("No user documents found for the given user ID");
-//     }
-
-//     const userDocRef = querySnapshot.docs[0].ref;
-
-//     const photos = placeDetail.photos
-//       ? placeDetail.photos.map((photo) => photo.getUrl())
-//       : [];
-
-//     const tripsCollectionRef = collection(userDocRef, "journey");
-
-//     await addDoc(tripsCollectionRef, {
-//       name: placeDetail.name,
-//       address: placeDetail.formatted_address,
-//       place_id: placeDetail.place_id,
-//       photos: photos,
-//       date: date,
-//       startTime: startTime,
-//     });
-
-//     console.log("New attraction added successfully!");
-//   } catch (error) {
-//     console.error("Error adding place to Firestore:", error);
-//   }
-// };
-
 export const fetchJourney = async (journeyId) => {
   try {
     const journeyDocRef = doc(db, "journeys", journeyId);
@@ -192,6 +154,7 @@ export const addAttraction = async (
     return false;
   }
 };
+
 export const signInWithGoogle = async (googleToken) => {
   const credential = GoogleAuthProvider.credential(googleToken);
   return signInWithCredential(auth, credential);
@@ -213,7 +176,6 @@ export const updateUserProfile = async (user) => {
 };
 
 export const deleteAttraction = async (journeyId, placeId) => {
-  console.log(journeyId, placeId);
   try {
     const journeyCollectionRef = collection(
       db,
