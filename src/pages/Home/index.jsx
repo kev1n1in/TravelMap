@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import {
@@ -7,8 +11,6 @@ import {
   CardContent,
   Typography,
   Button,
-  Chip,
-  Skeleton,
   Input,
   Dialog,
   DialogActions,
@@ -23,6 +25,9 @@ import {
   fetchUserJourneys,
   deleteJourney,
 } from "../../firebase/firebaseService";
+import defaultImg from "./default-img.jpg";
+import trash from "./trash-bin.png";
+import { motion } from "framer-motion";
 
 const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
@@ -31,6 +36,8 @@ const Home = () => {
   const [filteredSearch, setFilteredSearch] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const [journeyTimes, setJourneyTimes] = useState({});
+  const queryClient = useQueryClient();
 
   const {
     data,
@@ -44,7 +51,7 @@ const Home = () => {
     queryFn: ({ pageParam = null }) =>
       fetchUserJourneys(user.uid, { pageParam, limit: 6 }),
     getNextPageParam: (lastPage) => lastPage?.lastVisible || undefined,
-    enabled: !!user?.uid, // 确保用户已登录后才执行查询
+    enabled: !!user?.uid,
   });
 
   useEffect(() => {
@@ -57,6 +64,25 @@ const Home = () => {
         );
       });
       setFilteredSearch(filtered);
+
+      const journeyTimesData = {};
+      filtered.forEach((doc) => {
+        if (doc.journey && doc.journey.length > 0) {
+          const sortedJourneys = doc.journey.sort((a, b) => {
+            return (
+              new Date(`${a.date} ${a.startTime}`) -
+              new Date(`${b.date} ${b.startTime}`)
+            );
+          });
+          journeyTimesData[doc.id] = {
+            start: `${sortedJourneys[0].date} ${sortedJourneys[0].startTime}`,
+            end: `${sortedJourneys[sortedJourneys.length - 1].date} ${
+              sortedJourneys[sortedJourneys.length - 1].startTime
+            }`,
+          };
+        }
+      });
+      setJourneyTimes(journeyTimesData);
     }
   }, [data, search, status]);
 
@@ -68,6 +94,8 @@ const Home = () => {
     mutationFn: deleteJourney,
     onSuccess: () => {
       alert("行程刪除成功！");
+      queryClient.invalidateQueries(["userJourneys", user?.uid]);
+      handleCloseDialog();
     },
     onError: () => {
       alert("刪除行程時出現錯誤");
@@ -133,84 +161,81 @@ const Home = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => navigate("/new-journey")}
+          onClick={() => navigate("/journey")}
         >
           新增行程
         </Button>
       </Form>
 
       <GridContainer>
-        {filteredSearch.map((doc) => (
-          <Card
-            key={doc.id}
-            style={{ marginBottom: "10px", cursor: "pointer" }}
-            onClick={() => handleCardClick(doc.id)}
-          >
-            <CardContent
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
-              }}
+        {filteredSearch.map((doc) => {
+          console.log(doc.journey);
+
+          return (
+            <Card
+              key={doc.id}
+              style={{ marginBottom: "10px", cursor: "pointer" }}
+              onClick={() => handleCardClick(doc.id)}
             >
-              {doc.journey &&
-              doc.journey.length > 0 &&
-              doc.journey[0].photos &&
-              doc.journey[0].photos.length > 0 ? (
-                <img
-                  src={doc.journey[0].photos[0]}
-                  alt={doc.journey[0].name || "無標題"}
-                  style={{
-                    width: "100%",
-                    height: "140px",
-                    borderRadius: 4,
-                    objectFit: "cover",
-                  }}
-                />
-              ) : (
-                <Skeleton
-                  variant="rectangular"
-                  width="100%"
-                  height={140}
-                  style={{ borderRadius: 4 }}
-                />
-              )}
-              <div
+              <CardContent
                 style={{
                   display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  flexDirection: "column",
+                  position: "relative",
                 }}
               >
-                <Typography variant="h6">{doc.title || "無標題"}</Typography>
-                <Button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleOpenDialog(doc.id);
-                  }}
+                <ImageContainer>
+                  {doc.journey &&
+                  doc.journey.length > 0 &&
+                  doc.journey[0].photos &&
+                  doc.journey[0].photos.length > 0 ? (
+                    <JourneyImage
+                      src={doc.journey[0].photos[0]}
+                      alt={doc.journey[0].name || "無標題"}
+                    />
+                  ) : (
+                    <JourneyImage src={defaultImg} alt="Default" />
+                  )}
+                </ImageContainer>
+                <div
                   style={{
-                    padding: 0,
-                    minWidth: "unset",
-                    background: "transparent",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
-                  <Chip
-                    label="刪除"
-                    style={{
-                      backgroundColor: "#ff6666",
-                      color: "#ffffff",
-                      marginTop: "10px",
+                  <Typography variant="h6">{doc.title || "無標題"}</Typography>
+                  <RemoveButton
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleOpenDialog("documentId");
                     }}
-                  />
-                </Button>
-              </div>
-              <Typography>我是時間</Typography>
-              <Typography variant="body2" color="textSecondary">
-                {doc.description || "無描述"}
-              </Typography>
-            </CardContent>
-          </Card>
-        ))}
+                    whileHover={{ scale: 1.2 }} // 當鼠標懸停時，按鈕會放大
+                    whileTap={{ scale: 0.8 }} // 當按鈕被點擊時，按鈕會縮小
+                  >
+                    <RemoveImg
+                      src={trash}
+                      alt="刪除"
+                      initial={{ rotate: 0 }} // 初始狀態
+                      animate={{ rotate: [0, 20, -20, 0] }} // 當被點擊時旋轉
+                      transition={{ duration: 0.5 }} // 旋轉動畫的時長
+                    />
+                  </RemoveButton>
+                </div>
+                {journeyTimes[doc.id] && (
+                  <Typography>
+                    {`${journeyTimes[doc.id].start} ~ ${
+                      journeyTimes[doc.id].end
+                    }`}
+                  </Typography>
+                )}
+                <Typography variant="body2" color="textSecondary">
+                  {doc.description || "無描述"}
+                </Typography>
+              </CardContent>
+            </Card>
+          );
+        })}
 
         {isFetchingNextPage && (
           <LoaderWrapper>
@@ -266,6 +291,41 @@ const LoaderWrapper = styled.div`
   justify-content: center;
   align-items: center;
   padding: 20px;
+`;
+
+const ImageContainer = styled.div`
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+  border-radius: 4px;
+`;
+
+const JourneyImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease-in-out;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+const RemoveButton = styled(motion.button)`
+  margin-top: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+`;
+
+const RemoveImg = styled(motion.img)`
+  width: 36px;
+  height: 36px;
+
+  &:hover {
+    opacity: 0.7;
+  }
 `;
 
 export default Home;

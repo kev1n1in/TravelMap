@@ -221,6 +221,7 @@ const Map = () => {
       </MapContainer>
       <CardsContainer>
         <JourneyList
+          journeyId={journeyId}
           journeys={journeys}
           isLoading={isLoading}
           error={error}
