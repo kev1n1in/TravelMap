@@ -27,7 +27,6 @@ const Modal = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
   const queryClient = useQueryClient();
-
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
       const urls = placeDetails.photos
@@ -48,7 +47,7 @@ const Modal = ({
     );
   };
 
-  const mutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: async (newAttraction) => {
       await addAttraction(
         newAttraction.journeyId,
@@ -59,6 +58,7 @@ const Modal = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
+      onClose();
       alert("建立行程成功！");
     },
     onError: (error) => {
@@ -73,7 +73,7 @@ const Modal = ({
       return;
     }
 
-    mutation.mutate({
+    createMutation.mutate({
       journeyId,
       placeDetails,
       tripDate,
@@ -150,7 +150,14 @@ Modal.propTypes = {
   placeDetails: PropTypes.shape({
     name: PropTypes.string.isRequired,
     formatted_address: PropTypes.string.isRequired,
-    photos: PropTypes.arrayOf(PropTypes.string),
+    photos: PropTypes.arrayOf(
+      PropTypes.shape({
+        height: PropTypes.number,
+        html_attributions: PropTypes.arrayOf(PropTypes.string),
+        width: PropTypes.number,
+        // 如果需要，还可以添加其他字段
+      })
+    ),
     place_id: PropTypes.string,
   }),
   onClose: PropTypes.func.isRequired,

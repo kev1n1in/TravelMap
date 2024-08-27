@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   setDoc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -10,6 +11,7 @@ import {
   startAfter,
   addDoc,
   updateDoc,
+  serverTimestamp,
   limit as firestoreLimit,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
@@ -18,7 +20,7 @@ import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 import { getAuth } from "firebase/auth";
 
-export const handleCreateJourney = async (title, description) => {
+export const handleCreateJourney = async (title, description, navigate) => {
   try {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -45,10 +47,20 @@ export const handleCreateJourney = async (title, description) => {
 
     console.log("New journey document created with ID:", newDocRef.id);
     alert("新行程已成功創建！");
+    navigate(`/journey/${newDocRef.id}`);
   } catch (error) {
     console.error("Error creating journey document:", error);
     alert("出了一點問題：" + error.message);
   }
+};
+
+export const handleSaveJourney = async (documentId, title, description) => {
+  const journeyRef = doc(db, "journeys", documentId);
+  await updateDoc(journeyRef, {
+    title,
+    description,
+    updatedAt: serverTimestamp(),
+  });
 };
 
 export async function fetchUserJourneys(
@@ -75,11 +87,48 @@ export async function fetchUserJourneys(
     }
 
     const snapshot = await getDocs(q);
-    const journeys = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: dayjs(doc.data().createdAt).format("YYYY-MM-DD"),
-    }));
+    const journeys = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const journeyData = doc.data();
+        const journeySubcollectionRef = collection(doc.ref, "journey");
+        const journeySubcollectionSnapshot = await getDocs(
+          journeySubcollectionRef
+        );
+        const journeySubcollectionData = journeySubcollectionSnapshot.docs.map(
+          (subDoc) => subDoc.data()
+        );
+
+        const sortedTimes = journeySubcollectionData
+          .map((item) => ({
+            date: item.date,
+            startTime: item.startTime,
+          }))
+          .filter((item) => item.date && item.startTime)
+          .sort((a, b) => {
+            const dateCompare = a.date.localeCompare(b.date);
+            return dateCompare !== 0
+              ? dateCompare
+              : a.startTime.localeCompare(b.startTime);
+          });
+
+        return {
+          id: doc.id,
+          ...journeyData,
+          journey: journeySubcollectionData,
+          start:
+            sortedTimes.length > 0
+              ? `${sortedTimes[0].date} ${sortedTimes[0].startTime}`
+              : null,
+          end:
+            sortedTimes.length > 0
+              ? `${sortedTimes[sortedTimes.length - 1].date} ${
+                  sortedTimes[sortedTimes.length - 1].startTime
+                }`
+              : null,
+          createdAt: dayjs(journeyData.createdAt).format("YYYY-MM-DD"),
+        };
+      })
+    );
 
     const lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
@@ -95,6 +144,9 @@ export async function fetchUserJourneys(
 
 export const fetchJourney = async (journeyId) => {
   try {
+    if (!journeyId) {
+      return null;
+    }
     const journeyDocRef = doc(db, "journeys", journeyId);
     const journeyCollectionRef = collection(journeyDocRef, "journey");
     const journeySnapshot = await getDocs(journeyCollectionRef);
@@ -224,5 +276,21 @@ export const updateAttraction = async (
   } catch (error) {
     console.error("Error deleting documents:", error.message);
     return false;
+  }
+};
+
+export const fetchSingleJourney = async (journeyId) => {
+  try {
+    const journeyDocRef = doc(db, "journeys", journeyId);
+    const journeyDoc = await getDoc(journeyDocRef);
+
+    if (journeyDoc.exists()) {
+      return journeyDoc.data(); // 返回該文件的資料
+    } else {
+      throw new Error("Journey not found");
+    }
+  } catch (error) {
+    console.error("Error fetching journey:", error);
+    throw error;
   }
 };

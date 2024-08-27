@@ -27,6 +27,14 @@ function App() {
               }
             />
             <Route
+              path="/journey"
+              element={
+                <ProtectedRoute>
+                  <SingleJourney />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/journey/:id"
               element={
                 <ProtectedRoute>

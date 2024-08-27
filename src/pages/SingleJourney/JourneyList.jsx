@@ -1,14 +1,28 @@
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
 import Typography from "@mui/material/Typography";
-import { Box, TextField, Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
-import { handleCreateJourney } from "../../firebase/firebaseService";
-import { useState } from "react";
+import {
+  handleCreateJourney,
+  handleSaveJourney,
+  fetchSingleJourney,
+} from "../../firebase/firebaseService";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
 
-const JourneyList = ({ journeys, isLoading, error }) => {
+const JourneyList = ({
+  journeyId,
+  journeys,
+  isLoading,
+  error,
+  onClickCard,
+}) => {
   const navigate = useNavigate();
+  const [newJourney, setNewJourney] = useState({
+    title: "",
+    description: "",
+  });
 
   const groupedJourneys = journeys?.reduce((acc, journey) => {
     const date = new Date(journey.date).toDateString();
@@ -19,12 +33,22 @@ const JourneyList = ({ journeys, isLoading, error }) => {
     return acc;
   }, {});
 
-  const [newJourney, setNewJourney] = useState({
-    title: "",
-    description: "",
+  const createMutation = useMutation({
+    mutationFn: ({ title, description }) =>
+      journeyId
+        ? handleSaveJourney(journeyId, title, description)
+        : handleCreateJourney(title, description, navigate),
+    onSuccess: () => {
+      alert(journeyId ? "行程已成功保存！" : "行程創建成功！");
+      setNewJourney({ title: "", description: "" });
+      handleGoBack();
+    },
+    onError: () => {
+      alert("操作行程時出現錯誤");
+    },
   });
 
-  const handleCreateJourneyClick = () => {
+  const handleCreateOrSaveJourneyClick = () => {
     if (newJourney.title && newJourney.description) {
       createMutation.mutate({
         title: newJourney.title,
@@ -35,57 +59,51 @@ const JourneyList = ({ journeys, isLoading, error }) => {
     }
   };
 
-  const createMutation = useMutation({
-    mutationFn: ({ title, description }) =>
-      handleCreateJourney(title, description),
-    onSuccess: () => {
-      alert("行程創建成功！");
-      setNewJourney({ title: "", description: "" }); // 重置表單
-    },
-    onError: () => {
-      alert("創建行程時出現錯誤");
-    },
-  });
-
   const handleInputChange = (e) => {
     setNewJourney({ ...newJourney, [e.target.name]: e.target.value });
   };
 
+  useEffect(() => {
+    if (journeyId) {
+      const fetchJourneyData = async () => {
+        const data = await fetchSingleJourney(journeyId);
+        setNewJourney({ title: data.title, description: data.description });
+      };
+      fetchJourneyData();
+    }
+  }, [journeyId]);
+
   const handleGoBack = () => {
-    navigate("/home");
+    window.location.reload();
   };
 
   return (
     <ListWrapper>
       <Box p={2}>
         <TypeWrapper>
-          <Typography variant="h6">新增行程</Typography>
-          <TextField
-            label="行程名稱"
+          <Typography variant="h6">
+            {journeyId ? "編輯行程" : "新增行程"}
+          </Typography>
+          <JourneyTitle
+            placeholder="行程名稱"
             name="title"
             value={newJourney.title}
             onChange={handleInputChange}
-            fullWidth
-            sx={{ mb: 2 }}
           />
-          <TextField
-            label="行程描述"
+          <JourneyDes
+            placeholder="行程描述"
             name="description"
             value={newJourney.description}
             onChange={handleInputChange}
-            fullWidth
-            multiline
-            rows={4}
-            sx={{ mb: 2 }}
           />
           <Button
             variant="contained"
             color="primary"
-            onClick={handleCreateJourneyClick}
+            onClick={handleCreateOrSaveJourneyClick}
             disabled={createMutation.isLoading}
             sx={{ mb: 2 }}
           >
-            儲存此行程
+            {journeyId ? "儲存行程" : "建立行程"}
           </Button>
         </TypeWrapper>
         <ContentWrapper>
@@ -98,7 +116,10 @@ const JourneyList = ({ journeys, isLoading, error }) => {
               <Box key={date} mb={2}>
                 <Typography variant="h6">{date}</Typography>
                 {groupedJourneys[date].map((journey) => (
-                  <JourneyCard key={journey.id}>
+                  <JourneyCard
+                    key={journey.id}
+                    onClick={() => onClickCard(journey)}
+                  >
                     {journey.photos && journey.photos.length > 0 && (
                       <Box mb={1}>
                         <JourneyImage
@@ -143,12 +164,42 @@ JourneyList.propTypes = {
       name: PropTypes.string,
       photos: PropTypes.array,
     })
-  ).isRequired,
+  ),
   isLoading: PropTypes.bool.isRequired,
   error: PropTypes.shape({
     message: PropTypes.string,
   }),
+  journeyId: PropTypes.string,
+  onClickCard: PropTypes.func,
 };
+
+const JourneyTitle = styled.input`
+  width: 100%;
+  padding-top: 16px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  border: none;
+  border-bottom: none;
+  &:focus {
+    outline: none;
+    border-bottom: none;
+  }
+`;
+
+const JourneyDes = styled.textarea`
+  width: 100%;
+  height: 100px;
+  padding-top: 16px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  border: none;
+  border-bottom: none;
+  resize: none;
+  &:focus {
+    outline: none;
+    border-bottom: none;
+  }
+`;
 
 const ListWrapper = styled.div`
   width: 100%;
