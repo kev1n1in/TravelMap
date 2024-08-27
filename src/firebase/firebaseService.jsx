@@ -13,25 +13,33 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import dayjs from "dayjs";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { auth } from "./firebaseConfig";
+import { getAuth } from "firebase/auth";
 
 export const handleCreateJourney = async (title, description) => {
   try {
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      throw new Error("User ID not found in localStorage");
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      throw new Error("User not authenticated");
     }
+
+    const userId = user.uid;
 
     if (!title || !description) {
-      throw new Error("Title or Description cannot be empty");
+      throw new Error("Title and Description cannot be empty");
     }
 
-    const usersCollectionRef = collection(db, "journeys");
-    const newDocRef = doc(usersCollectionRef);
+    const journeysCollectionRef = collection(db, "journeys");
+    const newDocRef = doc(journeysCollectionRef);
 
     await setDoc(newDocRef, {
-      user_id: userId,
+      uid: userId,
       title: title,
       description: description,
+      createdAt: new Date().toISOString(),
     });
 
     console.log("New journey document created with ID:", newDocRef.id);
@@ -42,95 +50,85 @@ export const handleCreateJourney = async (title, description) => {
   }
 };
 
-export async function fetchUserDocuments({ pageParam = null, limit = 6 }) {
+export async function fetchUserJourneys(
+  userId,
+  { pageParam = null, limit = 6 }
+) {
   try {
-    const usersCollectionRef = collection(db, "journeys");
-
+    const journeyRef = collection(db, "journeys");
     let q = query(
-      usersCollectionRef,
-      orderBy("user_id"),
+      journeyRef,
+      where("uid", "==", userId),
+      orderBy("createdAt"),
       firestoreLimit(limit)
     );
 
     if (pageParam) {
       q = query(
-        usersCollectionRef,
-        orderBy("user_id"),
+        journeyRef,
+        where("uid", "==", userId),
+        orderBy("createdAt"),
         startAfter(pageParam),
         firestoreLimit(limit)
       );
     }
 
-    const querySnapshot = await getDocs(q);
+    const snapshot = await getDocs(q);
+    const journeys = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: dayjs(doc.data().createdAt).format("YYYY-MM-DD"),
+    }));
 
-    const usersList = [];
-
-    for (const doc of querySnapshot.docs) {
-      // Fetch the journey subcollection for each document
-      const journeyCollectionRef = collection(doc.ref, "journey");
-      const journeySnapshot = await getDocs(journeyCollectionRef);
-
-      const journeyData = journeySnapshot.docs.map((journeyDoc) => ({
-        id: journeyDoc.id,
-        ...journeyDoc.data(),
-      }));
-
-      usersList.push({
-        id: doc.id,
-        ...doc.data(),
-        journey: journeyData, // Attach the journey subcollection data
-      });
-    }
-
-    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+    const lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
     return {
-      usersList,
+      journeys,
       lastVisible,
     };
   } catch (error) {
-    console.error("Error fetching user documents:", error);
+    console.error("Error fetching user journeys:", error.message);
     throw error;
   }
 }
 
-export const handleCreateTrip = async (placeDetail, date, startTime) => {
-  try {
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      throw new Error("User ID not found in localStorage");
-    }
+// export const handleCreateTrip = async (placeDetail, date, startTime) => {
+//   try {
+//     const userId = localStorage.getItem("userId");
+//     if (!userId) {
+//       throw new Error("User ID not found in localStorage");
+//     }
 
-    const usersCollectionRef = collection(db, "journeys");
-    const userQuery = query(usersCollectionRef, where("user_id", "==", userId));
-    const querySnapshot = await getDocs(userQuery);
+//     const usersCollectionRef = collection(db, "journeys");
+//     const userQuery = query(usersCollectionRef, where("user_id", "==", userId));
+//     const querySnapshot = await getDocs(userQuery);
 
-    if (querySnapshot.empty) {
-      throw new Error("No user documents found for the given user ID");
-    }
+//     if (querySnapshot.empty) {
+//       throw new Error("No user documents found for the given user ID");
+//     }
 
-    const userDocRef = querySnapshot.docs[0].ref;
+//     const userDocRef = querySnapshot.docs[0].ref;
 
-    const photos = placeDetail.photos
-      ? placeDetail.photos.map((photo) => photo.getUrl())
-      : [];
+//     const photos = placeDetail.photos
+//       ? placeDetail.photos.map((photo) => photo.getUrl())
+//       : [];
 
-    const tripsCollectionRef = collection(userDocRef, "journey");
+//     const tripsCollectionRef = collection(userDocRef, "journey");
 
-    await addDoc(tripsCollectionRef, {
-      name: placeDetail.name,
-      address: placeDetail.formatted_address,
-      place_id: placeDetail.place_id,
-      photos: photos,
-      date: date,
-      startTime: startTime,
-    });
+//     await addDoc(tripsCollectionRef, {
+//       name: placeDetail.name,
+//       address: placeDetail.formatted_address,
+//       place_id: placeDetail.place_id,
+//       photos: photos,
+//       date: date,
+//       startTime: startTime,
+//     });
 
-    console.log("New attraction added successfully!");
-  } catch (error) {
-    console.error("Error adding place to Firestore:", error);
-  }
-};
+//     console.log("New attraction added successfully!");
+//   } catch (error) {
+//     console.error("Error adding place to Firestore:", error);
+//   }
+// };
 
 export const fetchJourney = async (journeyId) => {
   try {
@@ -191,4 +189,23 @@ export const addAttraction = async (
     console.error("Error adding place to Firestore:", error);
     return false;
   }
+};
+export const signInWithGoogle = async (googleToken) => {
+  const credential = GoogleAuthProvider.credential(googleToken);
+  return signInWithCredential(auth, credential);
+};
+
+export const updateUserProfile = async (user) => {
+  const userRef = doc(db, "users", user.uid);
+  return setDoc(
+    userRef,
+    {
+      uid: user.uid,
+      userName: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+      lastLogin: new Date(),
+    },
+    { merge: true }
+  );
 };

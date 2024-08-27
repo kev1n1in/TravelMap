@@ -17,12 +17,15 @@ import {
   DialogTitle,
 } from "@mui/material";
 import { RingLoader } from "react-spinners";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../../firebase/firebaseConfig";
 import {
-  fetchUserDocuments,
+  fetchUserJourneys,
   deleteJourney,
 } from "../../firebase/firebaseService";
 
 const Home = () => {
+  const [user, loading, authError] = useAuthState(auth);
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filteredSearch, setFilteredSearch] = useState([]);
@@ -37,15 +40,16 @@ const Home = () => {
     status,
     error,
   } = useInfiniteQuery({
-    queryKey: ["usersDocuments"],
+    queryKey: ["userJourneys", user?.uid],
     queryFn: ({ pageParam = null }) =>
-      fetchUserDocuments({ pageParam, limit: 6 }),
+      fetchUserJourneys(user.uid, { pageParam, limit: 6 }),
     getNextPageParam: (lastPage) => lastPage?.lastVisible || undefined,
+    enabled: !!user?.uid, // 确保用户已登录后才执行查询
   });
 
   useEffect(() => {
     if (status === "success" && data) {
-      const allDocs = data.pages.flatMap((page) => page.usersList);
+      const allDocs = data.pages.flatMap((page) => page.journeys);
       const filtered = allDocs.filter((doc) => {
         return (
           doc.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -112,103 +116,109 @@ const Home = () => {
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  if (loading)
+    return (
+      <LoaderWrapper>
+        <RingLoader color="#123abc" />
+      </LoaderWrapper>
+    );
+  if (authError || error)
+    return <p>獲取用戶文檔時出錯: {authError?.message || error.message}</p>;
+
   return (
     <Container>
       <Title>行程總覽</Title>
       <Form>
         <Input placeholder="搜尋行程" onChange={handleSearchChange} />
-        <Button variant="contained" color="primary" onClick={handleCardClick}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate("/new-journey")}
+        >
           新增行程
         </Button>
       </Form>
 
-      {status === "loading" ? (
-        <LoaderWrapper>
-          <RingLoader color="#123abc" />
-        </LoaderWrapper>
-      ) : status === "error" ? (
-        <p>獲取用戶文檔時出錯: {error.message}</p>
-      ) : (
-        <GridContainer>
-          {filteredSearch.map((doc) => (
-            <Card
-              key={doc.id}
-              style={{ marginBottom: "10px", cursor: "pointer" }}
-              onClick={() => handleCardClick(doc.id)}
+      <GridContainer>
+        {filteredSearch.map((doc) => (
+          <Card
+            key={doc.id}
+            style={{ marginBottom: "10px", cursor: "pointer" }}
+            onClick={() => handleCardClick(doc.id)}
+          >
+            <CardContent
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+              }}
             >
-              <CardContent
+              {doc.journey &&
+              doc.journey.length > 0 &&
+              doc.journey[0].photos &&
+              doc.journey[0].photos.length > 0 ? (
+                <img
+                  src={doc.journey[0].photos[0]}
+                  alt={doc.journey[0].name || "無標題"}
+                  style={{
+                    width: "100%",
+                    height: "140px",
+                    borderRadius: 4,
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <Skeleton
+                  variant="rectangular"
+                  width="100%"
+                  height={140}
+                  style={{ borderRadius: 4 }}
+                />
+              )}
+              <div
                 style={{
                   display: "flex",
-                  flexDirection: "column",
-                  position: "relative",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
-                {doc.journey &&
-                doc.journey.length > 0 &&
-                doc.journey[0].photos &&
-                doc.journey[0].photos.length > 0 ? (
-                  <img
-                    src={doc.journey[0].photos[0]}
-                    alt={doc.journey[0].name || "無標題"}
-                    style={{
-                      width: "100%",
-                      height: "140px",
-                      borderRadius: 4,
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  <Skeleton
-                    variant="rectangular"
-                    width="100%"
-                    height={140}
-                    style={{ borderRadius: 4 }}
-                  />
-                )}
-                <div
+                <Typography variant="h6">{doc.title || "無標題"}</Typography>
+                <Button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleOpenDialog(doc.id);
+                  }}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    padding: 0,
+                    minWidth: "unset",
+                    background: "transparent",
                   }}
                 >
-                  <Typography variant="h6">{doc.title || "無標題"}</Typography>
-                  <Button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleOpenDialog(doc.id);
-                    }}
+                  <Chip
+                    label="刪除"
                     style={{
-                      padding: 0,
-                      minWidth: "unset",
-                      background: "transparent",
+                      backgroundColor: "#ff6666",
+                      color: "#ffffff",
+                      marginTop: "10px",
                     }}
-                  >
-                    <Chip
-                      label="刪除"
-                      style={{
-                        backgroundColor: "#ff6666",
-                        color: "#ffffff",
-                        marginTop: "10px",
-                      }}
-                    />
-                  </Button>
-                </div>
-                <Typography>我是時間</Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {doc.description || "無描述"}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))}
+                  />
+                </Button>
+              </div>
+              <Typography>我是時間</Typography>
+              <Typography variant="body2" color="textSecondary">
+                {doc.description || "無描述"}
+              </Typography>
+            </CardContent>
+          </Card>
+        ))}
 
-          {isFetchingNextPage && (
-            <LoaderWrapper>
-              <RingLoader color="#123abc" />
-            </LoaderWrapper>
-          )}
-        </GridContainer>
-      )}
+        {isFetchingNextPage && (
+          <LoaderWrapper>
+            <RingLoader color="#123abc" />
+          </LoaderWrapper>
+        )}
+      </GridContainer>
+
       <Dialog open={open} onClose={handleCloseDialog}>
         <DialogTitle>確認刪除</DialogTitle>
         <DialogContent>

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { useQuery } from "@tanstack/react-query";
 import Modal from "./Modal";
-// import { useParams } from "react-router-dom";
+import PropTypes from "prop-types";
 import attractionPin from "./img/bluePin.png";
 import styled from "styled-components";
 import SearchImg from "../SingleJourney/img/search.png";
@@ -115,6 +115,9 @@ const Map = ({ journeyId }) => {
       </SearchButton>
     </>
   );
+};
+Map.propTypes = {
+  journeyId: PropTypes.string.isRequired,
 };
 
 export default Map;

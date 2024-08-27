@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom"; // 引入 useParams
+import { useNavigate } from "react-router-dom";
 import Drawer from "@mui/material/Drawer";
 import Typography from "@mui/material/Typography";
 import { Box, TextField, Button } from "@mui/material";
@@ -10,17 +10,6 @@ import styled from "styled-components";
 
 const JourneyCardDrawer = ({ journeys, isLoading, error }) => {
   const navigate = useNavigate();
-  // const { id: journeyId } = useParams();
-
-  // const {
-  //   data: journeys,
-  //   isLoading,
-  //   error,
-  // } = useQuery({
-  //   queryKey: ["journeys", journeyId],
-  //   queryFn: () => fetchJourney(journeyId),
-  //   onSuccess: (data) => console.log("Fetched journeys:", data),
-  // });
 
   const groupedJourneys = journeys?.reduce((acc, journey) => {
     const date = new Date(journey.date).toDateString();
@@ -69,7 +58,7 @@ const JourneyCardDrawer = ({ journeys, isLoading, error }) => {
 
   return (
     <Drawer
-      variant="permanent" // 設定為 permanent drawer
+      variant="permanent"
       anchor="right"
       PaperProps={{ style: { width: 300 } }}
     >
@@ -149,10 +138,10 @@ const JourneyCardDrawer = ({ journeys, isLoading, error }) => {
     </Drawer>
   );
 };
-
 JourneyCardDrawer.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
+  journeys: PropTypes.array.isRequired,
+  isLoading: PropTypes.bool.isRequired,
+  error: PropTypes.object,
 };
 
 const TypeWrapper = styled.div`
