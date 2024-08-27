@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
-import {
-  addAttraction,
-  // deleteAttraction,
-  // updateAttraction,
-} from "../../firebase/firebaseService";
+import { addAttraction } from "../../firebase/firebaseService";
 import PropTypes from "prop-types";
 import { styled } from "styled-components";
 import closeImg from "./img/close.png";
 import locationImg from "./img/location.png";
-// import dayjs from "dayjs";
 import Grid from "@mui/material/Grid";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -27,10 +22,6 @@ const Modal = ({
   tripDate,
   tripStartTime,
 }) => {
-  // const [tripDate, setTripDate] = useState(dayjs());
-  // const [tripStartTime, setTripStartTime] = useState(
-  //   dayjs().set("hour", 14).startOf("hour")
-  // );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
 

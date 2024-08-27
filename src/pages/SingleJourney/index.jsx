@@ -8,8 +8,7 @@ import bluePin from "./img/bluePin.png";
 import redPin from "./img/redPin.png";
 import styled from "styled-components";
 import SearchImg from "../SingleJourney/img/search.png";
-// import JourneyCardDrawer from "./JourneyCardDrawer";
-import JourneyCards from "./JourneyList";
+import JourneyList from "./JourneyList";
 import dayjs from "dayjs";
 import {
   modalReducer,
@@ -221,7 +220,12 @@ const Map = () => {
         </SearchButton>
       </MapContainer>
       <CardsContainer>
-        <JourneyCards journeys={journeys} isLoading={isLoading} error={error} />
+        <JourneyList
+          journeys={journeys}
+          isLoading={isLoading}
+          error={error}
+          onUpdate={handleUpdate}
+        />
       </CardsContainer>
     </Container>
   );
@@ -262,6 +266,7 @@ const SearchButton = styled.button`
   transform: translateX(-50%);
   display: flex;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
 `;
 
 const SearchIcon = styled.img`
