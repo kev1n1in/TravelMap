@@ -1,6 +1,5 @@
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
-import Drawer from "@mui/material/Drawer";
 import Typography from "@mui/material/Typography";
 import { Box, TextField, Button } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
@@ -8,7 +7,7 @@ import { handleCreateJourney } from "../../firebase/firebaseService";
 import { useState } from "react";
 import styled from "styled-components";
 
-const JourneyCardDrawer = ({ journeys, isLoading, error }) => {
+const JourneyList = ({ journeys, isLoading, error }) => {
   const navigate = useNavigate();
 
   const groupedJourneys = journeys?.reduce((acc, journey) => {
@@ -57,11 +56,7 @@ const JourneyCardDrawer = ({ journeys, isLoading, error }) => {
   };
 
   return (
-    <Drawer
-      variant="permanent"
-      anchor="right"
-      PaperProps={{ style: { width: 300 } }}
-    >
+    <ListWrapper>
       <Box p={2}>
         <TypeWrapper>
           <Typography variant="h6">新增行程</Typography>
@@ -135,26 +130,44 @@ const JourneyCardDrawer = ({ journeys, isLoading, error }) => {
           </Button>
         </ContentWrapper>
       </Box>
-    </Drawer>
+    </ListWrapper>
   );
 };
-JourneyCardDrawer.propTypes = {
-  journeys: PropTypes.array.isRequired,
+
+export default JourneyList;
+
+JourneyList.propTypes = {
+  journeys: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      name: PropTypes.string,
+    })
+  ).isRequired,
   isLoading: PropTypes.bool.isRequired,
-  error: PropTypes.object,
+  error: PropTypes.shape({
+    message: PropTypes.string,
+  }),
 };
 
+const ListWrapper = styled.div`
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+`;
+
 const TypeWrapper = styled.div`
-  position: fixed;
+  position: absolute;
   background: white;
-  z-index: 1200;
   padding: 16px;
+  height: 320px;
+  top: 0;
 `;
 
 const ContentWrapper = styled.div`
-  margin-top: 330px;
+  margin-top: 320px;
   max-height: calc(100vh - 320px);
-  padding-right: 16px;
+  padding: 0px 16px 20px 0px;
+  overflow-y: auto;
+  box-sizing: border-box;
 `;
 
 const JourneyCard = styled(Box)`
@@ -169,5 +182,3 @@ const JourneyImage = styled.img`
   height: auto;
   border-radius: 4px;
 `;
-
-export default JourneyCardDrawer;
