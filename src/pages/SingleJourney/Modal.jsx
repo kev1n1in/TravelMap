@@ -1,21 +1,36 @@
 import { useEffect, useState } from "react";
-import { addAttraction } from "../../firebase/firebaseService";
+import {
+  addAttraction,
+  // deleteAttraction,
+  // updateAttraction,
+} from "../../firebase/firebaseService";
 import PropTypes from "prop-types";
 import { styled } from "styled-components";
 import closeImg from "./img/close.png";
 import locationImg from "./img/location.png";
-import dayjs from "dayjs";
+// import dayjs from "dayjs";
 import Grid from "@mui/material/Grid";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 
-const Modal = ({ journeyId, placeDetails, onClose }) => {
-  const [tripDate, setTripDate] = useState(dayjs());
-  const [tripStartTime, setTripStartTime] = useState(
-    dayjs().set("hour", 14).startOf("hour")
-  );
+const Modal = ({
+  journeyId,
+  placeDetails,
+  onClose,
+  modalType,
+  onDelete,
+  onUpdate,
+  onChangeDate,
+  onChangeTime,
+  tripDate,
+  tripStartTime,
+}) => {
+  // const [tripDate, setTripDate] = useState(dayjs());
+  // const [tripStartTime, setTripStartTime] = useState(
+  //   dayjs().set("hour", 14).startOf("hour")
+  // );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
 
@@ -39,14 +54,6 @@ const Modal = ({ journeyId, placeDetails, onClose }) => {
     setCurrentIndex(
       (prevIndex) => (prevIndex - 1 + photoUrls.length) % photoUrls.length
     );
-  };
-
-  const handleDateChange = (newValue) => {
-    setTripDate(newValue);
-  };
-
-  const handleTimeChange = (newValue) => {
-    setTripStartTime(newValue);
   };
 
   const handleCreate = async () => {
@@ -102,22 +109,27 @@ const Modal = ({ journeyId, placeDetails, onClose }) => {
               justifyContent="center"
             >
               <Grid item>
-                <StyledDateCalendar
-                  value={tripDate}
-                  onChange={handleDateChange}
-                />
+                <StyledDateCalendar value={tripDate} onChange={onChangeDate} />
               </Grid>
               <Grid item>
                 <StyledTimePicker
                   value={tripStartTime}
-                  onChange={handleTimeChange}
+                  onChange={onChangeTime}
                 />
               </Grid>
             </Grid>
           </LocalizationProvider>
-          <CreateWrapper>
-            <CreateButton onClick={handleCreate}>建立行程</CreateButton>
-          </CreateWrapper>
+
+          {modalType === "create" ? (
+            <ButtonWrapper>
+              <ModalButton onClick={handleCreate}>新增至行程</ModalButton>
+            </ButtonWrapper>
+          ) : (
+            <ButtonWrapper>
+              <ModalButton onClick={onUpdate}>更新行程時間</ModalButton>
+              <ModalButton onClick={onDelete}>刪除此地標</ModalButton>
+            </ButtonWrapper>
+          )}
         </InfoContainer>
       </ModalContainer>
     </ModalOverlay>
@@ -126,18 +138,26 @@ const Modal = ({ journeyId, placeDetails, onClose }) => {
 
 Modal.propTypes = {
   journeyId: PropTypes.string.isRequired,
+  modalType: PropTypes.string.isRequired,
   placeDetails: PropTypes.shape({
     name: PropTypes.string.isRequired,
     formatted_address: PropTypes.string.isRequired,
-    photos: PropTypes.array,
+    photos: PropTypes.arrayOf(PropTypes.string),
+    place_id: PropTypes.string,
   }),
   onClose: PropTypes.func.isRequired,
+  onDelete: PropTypes.func,
+  onUpdate: PropTypes.func,
+  onChangeDate: PropTypes.func,
+  onChangeTime: PropTypes.func,
+  tripDate: PropTypes.instanceOf(Date),
+  tripStartTime: PropTypes.instanceOf(Date),
 };
 
 export default Modal;
 
 const ModalOverlay = styled.div`
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -146,7 +166,7 @@ const ModalOverlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 100;
 `;
 
 const ModalContainer = styled.div`
@@ -155,7 +175,7 @@ const ModalContainer = styled.div`
   padding: 20px;
   border-radius: 8px;
   max-width: 1032px;
-  width: 100%;
+  width: 90%;
   height: 600px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 `;
@@ -221,12 +241,12 @@ const StyledTimePicker = styled(TimePicker)`
   padding: 0;
 `;
 
-const CreateWrapper = styled.div`
+const ButtonWrapper = styled.div`
   display: flex;
   justify-content: end;
 `;
 
-const CreateButton = styled.button`
+const ModalButton = styled.button`
   background-color: #007bff;
   color: white;
   border: none;

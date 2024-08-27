@@ -9,6 +9,7 @@ import {
   orderBy,
   startAfter,
   addDoc,
+  updateDoc,
   limit as firestoreLimit,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
@@ -167,7 +168,6 @@ export const addAttraction = async (
   tripStartTime
 ) => {
   try {
-    console.log("placeDetail", placeDetail);
     const photos = placeDetail.photos
       ? placeDetail.photos.map((photo) => photo.getUrl())
       : [];
@@ -183,12 +183,67 @@ export const addAttraction = async (
       photos: photos,
       date: dayjs(tripDate).format("YYYY-MM-DD"),
       startTime: dayjs(tripStartTime).format("HH:mm"),
+      lat: placeDetail.geometry.location.lat(),
+      lng: placeDetail.geometry.location.lng(),
     });
 
     console.log("New attraction added successfully!");
     return true;
   } catch (error) {
     console.error("Error adding place to Firestore:", error);
+    return false;
+  }
+};
+
+export const deleteAttraction = async (journeyId, placeId) => {
+  console.log(journeyId, placeId);
+  try {
+    const journeyCollectionRef = collection(
+      db,
+      "journeys",
+      journeyId,
+      "journey"
+    );
+    const q = query(journeyCollectionRef, where("place_id", "==", placeId));
+    const querySnapshot = await getDocs(q);
+
+    for (const docSnapshot of querySnapshot.docs) {
+      const docRef = doc(db, "journeys", journeyId, "journey", docSnapshot.id);
+      await deleteDoc(docRef);
+      return true;
+    }
+  } catch (error) {
+    console.error("Error deleting documents:", error.message);
+    return false;
+  }
+};
+
+export const updateAttraction = async (
+  journeyId,
+  placeId,
+  newDate,
+  newStartTime
+) => {
+  console.log(journeyId, placeId, newDate, newStartTime);
+  try {
+    const journeyCollectionRef = collection(
+      db,
+      "journeys",
+      journeyId,
+      "journey"
+    );
+    const q = query(journeyCollectionRef, where("place_id", "==", placeId));
+    const querySnapshot = await getDocs(q);
+    for (const docSnapshot of querySnapshot.docs) {
+      const docRef = doc(db, "journeys", journeyId, "journey", docSnapshot.id);
+      await updateDoc(docRef, {
+        date: dayjs(newDate).format("YYYY-MM-DD"),
+        startTime: dayjs(newStartTime).format("HH:mm"),
+      });
+      return true;
+    }
+  } catch (error) {
+    console.error("Error deleting documents:", error.message);
     return false;
   }
 };
