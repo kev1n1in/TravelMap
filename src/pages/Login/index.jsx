@@ -1,80 +1,40 @@
-import { useEffect, useReducer } from "react";
+// Login.js
 import { useNavigate } from "react-router-dom";
-import { initialState, loginReducer } from "../../utils/loginReducer";
-import styled from "styled-components";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import {
+  signInWithGoogle,
+  updateUserProfile,
+} from "../../firebase/firebaseService";
+
+const clientId =
+  "385608276124-eve8v6q1t1hb04f62up1ptccq3k2htf7.apps.googleusercontent.com";
 
 const Login = () => {
-  const [state, dispatch] = useReducer(loginReducer, initialState);
-  const { userId, email, password, error, isLoggedIn } = state;
   const navigate = useNavigate();
 
-  const handleInputChange = (event) => {
-    dispatch({
-      type: "SET_FIELD",
-      field: event.target.name,
-      value: event.target.value,
-    });
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    dispatch({ type: "LOGIN" });
-  };
-
-  useEffect(() => {
-    if (isLoggedIn) {
+  const handleCredentialResponse = async (response) => {
+    try {
+      const userCredential = await signInWithGoogle(response.credential);
+      const user = userCredential.user;
+      await updateUserProfile(user);
       navigate("/home");
+    } catch (error) {
+      console.error("Authentication with Firebase failed:", error);
     }
-  }, [isLoggedIn, navigate]);
+  };
 
   return (
-    <Container onSubmit={handleSubmit}>
-      <FieldWrapper>
-        <Label htmlFor="userId">使用者 ID：</Label>
-        <Input
-          id="userId"
-          name="userId"
-          type="text"
-          value={userId}
-          onChange={handleInputChange}
-          required
+    <GoogleOAuthProvider clientId={clientId}>
+      <div>
+        <GoogleLogin
+          onSuccess={handleCredentialResponse}
+          onError={() => console.log("Login Failed")}
+          useOneTap
         />
-      </FieldWrapper>
-      <FieldWrapper>
-        <Label htmlFor="email">帳號：</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          value={email}
-          onChange={handleInputChange}
-          required
-        />
-      </FieldWrapper>
-      <FieldWrapper>
-        <Label htmlFor="password">密碼：</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          value={password}
-          onChange={handleInputChange}
-          required
-        />
-      </FieldWrapper>
-      <Button type="submit">登入</Button>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-      {isLoggedIn && <SuccessMessage>登入成功！</SuccessMessage>}
-    </Container>
+        <p>使用 Google 登入快速訪問</p>
+      </div>
+    </GoogleOAuthProvider>
   );
 };
-
-const Container = styled.form``;
-const Input = styled.input``;
-const Button = styled.button``;
-const Label = styled.label``;
-const FieldWrapper = styled.div``;
-const ErrorMessage = styled.p``;
-const SuccessMessage = styled.p``;
 
 export default Login;
