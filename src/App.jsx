@@ -5,7 +5,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import Home from "./pages/Home";
-import SingleJourney from "./pages/SingleJourney";
+import SingleJourney from "./pages/SingleJourney/index";
 import Login from "./pages/Login";
 
 const theme = createTheme();
