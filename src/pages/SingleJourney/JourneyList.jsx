@@ -76,7 +76,6 @@ const JourneyList = ({
   const handleGoBack = () => {
     window.location.reload();
   };
-
   return (
     <ListWrapper>
       <Box p={2}>
@@ -134,6 +133,7 @@ const JourneyList = ({
                     <Typography variant="body2">
                       {journey.startTime || ""}
                     </Typography>
+                    <button>刪除</button>
                   </JourneyCard>
                 ))}
               </Box>
@@ -171,6 +171,7 @@ JourneyList.propTypes = {
   }),
   journeyId: PropTypes.string,
   onClickCard: PropTypes.func,
+  onDelete: PropTypes.func,
 };
 
 const JourneyTitle = styled.input`
