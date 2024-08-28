@@ -193,13 +193,11 @@ export const addAttraction = async (
       address: placeDetail.formatted_address,
       place_id: placeDetail.place_id,
       photos: photos,
-      date: dayjs(tripDate).format("YYYY-MM-DD"),
-      startTime: dayjs(tripStartTime).format("HH:mm"),
+      date: tripDate,
+      startTime: tripStartTime,
       lat: placeDetail.geometry.location.lat(),
       lng: placeDetail.geometry.location.lng(),
     });
-
-    console.log("New attraction added successfully!");
     return true;
   } catch (error) {
     console.error("Error adding place to Firestore:", error);
