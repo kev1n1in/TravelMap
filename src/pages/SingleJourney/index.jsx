@@ -1,16 +1,9 @@
-import {
-  GoogleMap,
-  useJsApiLoader,
-  MarkerF,
-  Polyline,
-} from "@react-google-maps/api";
+import { useJsApiLoader } from "@react-google-maps/api";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { fetchJourney } from "../../firebase/firebaseService";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Modal from "./Modal";
-import bluePin from "./img/bluePin.png";
-import redPin from "./img/redPin.png";
 import styled from "styled-components";
 import SearchImg from "../SingleJourney/img/search.png";
 import JourneyList from "./JourneyList";
@@ -24,94 +17,29 @@ import { useParams } from "react-router-dom";
 import {
   deleteAttraction,
   updateAttraction,
+  addAttraction,
 } from "../../firebase/firebaseService";
-
-const mapContainerStyle = {
-  width: "100%",
-  height: "100%",
-};
+import Map from "./Map";
 
 const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
 
-const Map = () => {
+const SingleJourney = () => {
   const [state, dispatch] = useReducer(modalReducer, initialState);
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(null);
   const { id: journeyId } = useParams();
+  const queryClient = useQueryClient();
   const [tripDate, setTripDate] = useState(dayjs());
   const [tripStartTime, setTripStartTime] = useState(
     dayjs().set("hour", 14).startOf("hour")
   );
-
-  const queryClient = useQueryClient();
-
-  const {
-    data: journeyData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["journeys", journeyId],
-    queryFn: () => fetchJourney(journeyId),
-    onSuccess: (data) => console.log("Fetched journeys:", data),
-  });
-
-  // console.log("journeys", journeyData);
-
-  const getSortedJourneys = () => {
-    if (!Array.isArray(journeyData)) {
-      return [];
-    }
-
-    return [...journeyData].sort((a, b) => {
-      const dateA = new Date(`${a.date} ${a.startTime}`);
-      const dateB = new Date(`${b.date} ${b.startTime}`);
-      return dateA - dateB;
-    });
-  };
-
-  const sortedJourney = getSortedJourneys();
-
-  // console.log("sortedJourney ", sortedJourney);
-
+  const [polylinePath, setPolylinePath] = useState([]);
+  const [sortedJourney, setSortedJourney] = useState([]);
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: API_KEY,
     libraries,
   });
-
-  const { data: places, refetch: refetchPlace } = useQuery({
-    queryKey: ["places", center],
-    queryFn: () => fetchPlaces(map, center),
-    enabled: false,
-    staleTime: 1000 * 60 * 5,
-    retry: false,
-  });
-
-  const polylinePath = sortedJourney.map((journey) => ({
-    lat: journey.lat,
-    lng: journey.lng,
-  }));
-
-  const handleSearchClick = () => {
-    const mapCenter = map.getCenter();
-    setCenter({
-      lat: mapCenter.lat(),
-      lng: mapCenter.lng(),
-    });
-    refetchPlace();
-  };
-
-  const { data: placeDetails } = useQuery({
-    queryKey: ["placeDetails", state.jourenyData?.place_id],
-    queryFn: () => fetchPlaceDetails(map, state.jourenyData.place_id),
-    enabled: !!state.isModalOpen,
-    staleTime: 1000 * 60 * 5,
-    retry: false,
-  });
-
-  const handleMapLoad = useCallback((mapInstance) => {
-    setMap(mapInstance);
-  }, []);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -126,10 +54,85 @@ const Map = () => {
     );
   }, []);
 
+  const {
+    data: journeyData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["journeys", journeyId],
+    queryFn: () => fetchJourney(journeyId),
+    onSuccess: (data) => console.log("Fetched journeys:", data),
+  });
+
+  useEffect(() => {
+    if (!Array.isArray(journeyData)) {
+      return;
+    }
+    const sorted = [...journeyData].sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.startTime}`);
+      const dateB = new Date(`${b.date} ${b.startTime}`);
+      return dateA - dateB;
+    });
+    setSortedJourney(sorted);
+  }, [journeyData]);
+
+  useEffect(() => {
+    if (!Array.isArray(sortedJourney)) {
+      return;
+    }
+    const path = sortedJourney.map((journey) => ({
+      lat: journey.lat,
+      lng: journey.lng,
+    }));
+    setPolylinePath(path);
+  }, [sortedJourney]);
+
+  const { data: places, refetch: refetchPlace } = useQuery({
+    queryKey: ["places", center],
+    queryFn: () => fetchPlaces(map, center),
+    enabled: false,
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
+
+  const { data: placeDetails } = useQuery({
+    queryKey: ["placeDetails", state.jourenyData?.place_id],
+    queryFn: () => fetchPlaceDetails(map, state.jourenyData.place_id),
+    enabled: !!state.isModalOpen,
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
+
+  const handleMapLoad = useCallback((mapInstance) => {
+    setMap(mapInstance);
+  }, []);
+
+  const handleMapUnmount = useCallback(() => {
+    setMap(null);
+  }, []);
+
+  const handleSearchClick = () => {
+    queryClient.setQueryData(["place", center], []);
+    const mapCenter = map.getCenter();
+    setCenter({
+      lat: mapCenter.lat(),
+      lng: mapCenter.lng(),
+    });
+  };
+
+  useEffect(() => {
+    if (center) {
+      refetchPlace();
+    }
+  }, [center, refetchPlace]);
+
   const handleMarkerClick = (data, isJourney) => {
     if (!journeyId) {
       alert("請先填寫行程名稱和描述");
       return;
+    }
+    if (map) {
+      map.setCenter({ lat: data.lat, lng: data.lng });
     }
     const modalType = isJourney ? "update" : "create";
     dispatch({
@@ -137,18 +140,74 @@ const Map = () => {
       payload: { modalType, data: data },
     });
   };
-  const handleMapUnmount = useCallback(() => {
-    setMap(null);
-  }, []);
 
   const handleCardClick = (data) => {
     if (!journeyId) {
       alert("請先填寫行程名稱和描述");
       return;
     }
+    if (map) {
+      map.setCenter({ lat: data.lat, lng: data.lng });
+    }
     dispatch({
       type: modalActionTypes.OPEN_MODAL,
       payload: { modalType: "update", data: data },
+    });
+  };
+
+  const handleDateChange = (newValue) => {
+    setTripDate(newValue);
+  };
+
+  const handleTimeChange = (newValue) => {
+    setTripStartTime(newValue);
+  };
+
+  const createMutation = useMutation({
+    mutationFn: async (newAttraction) => {
+      await addAttraction(
+        newAttraction.journeyId,
+        newAttraction.placeDetails,
+        newAttraction.tripDate,
+        newAttraction.tripStartTime
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["journeys", journeyId]);
+      dispatch({ type: modalActionTypes.CLOSE_MODAL });
+      alert("建立行程成功！");
+    },
+    onError: (error) => {
+      alert("建立行程失敗，請重試");
+      console.error("Error:", error);
+    },
+  });
+
+  const handleCreate = () => {
+    if (!tripDate || !tripStartTime) {
+      alert("請選擇日期和時間");
+      return;
+    }
+    const formattedTripDate = tripDate.format("YYYY-MM-DD");
+    const formattedTripStartTime = tripStartTime.format("HH:mm");
+
+    const isDuplicate = journeyData.some((journey) => {
+      return (
+        journey.date === formattedTripDate &&
+        journey.startTime === formattedTripStartTime
+      );
+    });
+
+    if (isDuplicate) {
+      alert("此時間已經有行程安排，請選擇其他時間");
+      return;
+    }
+
+    createMutation.mutate({
+      journeyId,
+      placeDetails,
+      tripDate: formattedTripDate,
+      tripStartTime: formattedTripStartTime,
     });
   };
 
@@ -177,6 +236,21 @@ const Map = () => {
       alert("請選擇日期和時間");
       return;
     }
+
+    const formattedTripDate = tripDate.format("YYYY-MM-DD");
+    const formattedTripStartTime = tripStartTime.format("HH:mm");
+
+    const isDuplicate = journeyData.some((journey) => {
+      return (
+        journey.date === formattedTripDate &&
+        journey.startTime === formattedTripStartTime
+      );
+    });
+
+    if (isDuplicate) {
+      alert("此時間已經有行程安排，請選擇其他時間");
+      return;
+    }
     updateMutation.mutate({
       journeyId,
       placeId: placeDetails.place_id,
@@ -200,101 +274,32 @@ const Map = () => {
     },
   });
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     deleteMutation.mutate({
       journeyId,
       placeId: placeDetails.place_id,
     });
   };
 
-  const handleDateChange = (newValue) => {
-    setTripDate(newValue);
-  };
-
-  const handleTimeChange = (newValue) => {
-    setTripStartTime(newValue);
-  };
-
-  const mapStyles = [
-    {
-      featureType: "transit",
-      elementType: "geometry",
-      stylers: [{ visibility: "off" }],
-    },
-    {
-      featureType: "transit",
-      elementType: "labels",
-      stylers: [{ visibility: "off" }],
-    },
-  ];
   if (!isLoaded) return <div>Loading...</div>;
 
   return (
     <Container>
       <MapContainer>
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          center={center}
-          zoom={13}
-          options={{ styles: mapStyles }}
-          onLoad={handleMapLoad}
+        <Map
           onUnmount={handleMapUnmount}
-        >
-          {polylinePath.length > 1 && (
-            <Polyline
-              key={JSON.stringify(polylinePath)}
-              path={polylinePath}
-              options={{
-                strokeColor: "#D22D2D",
-                strokeOpacity: 2.0,
-                strokeWeight: 2,
-              }}
-            />
-          )}
-          {places?.map((place) => {
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-            const isInJourneys = journeyData?.some(
-              (journey) => journey.lat === lat && journey.lng === lng
-            );
-            return (
-              <MarkerF
-                key={place.place_id}
-                position={{ lat: lat, lng: lng }}
-                onClick={() => handleMarkerClick(place, isInJourneys)}
-                label={{
-                  text: `${place.name}`,
-                  color: "black",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  labelOrigin: new window.google.maps.Point(20, -40),
-                }}
-                icon={{
-                  url: isInJourneys ? redPin : bluePin,
-                  scaledSize: new window.google.maps.Size(40, 40),
-                }}
-              />
-            );
-          })}
-          {sortedJourney?.map((journey, index) => (
-            <MarkerF
-              key={journey.id}
-              position={{ lat: journey.lat, lng: journey.lng }}
-              onClick={() => handleMarkerClick(journey, true)}
-              label={{
-                text: (index + 1).toString(),
-                color: "white",
-                fontSize: "20px",
-                fontWeight: "bold",
-                labelOrigin: new window.google.maps.Point(20, -30),
-              }}
-              icon={{
-                url: redPin,
-                scaledSize: new window.google.maps.Size(35, 35),
-              }}
-            />
-          ))}
-        </GoogleMap>
+          polylinePath={polylinePath}
+          center={center}
+          places={places}
+          journeyData={journeyData}
+          onClickMarker={handleMarkerClick}
+          sortedJourney={sortedJourney}
+          onMapLoad={handleMapLoad}
+        />
+        <SearchButton onClick={handleSearchClick}>
+          <SearchIcon src={SearchImg} />
+          搜尋此區域景點
+        </SearchButton>
         {state.isModalOpen && (
           <Modal
             journeyId={journeyId}
@@ -303,6 +308,7 @@ const Map = () => {
             onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
             onDelete={handleDelete}
             onUpdate={handleUpdate}
+            onCreate={() => handleCreate()}
             onChangeDate={handleDateChange}
             onChangeTime={handleTimeChange}
             tripDate={tripDate}
@@ -311,10 +317,6 @@ const Map = () => {
             error={error}
           />
         )}
-        <SearchButton onClick={handleSearchClick}>
-          <SearchIcon src={SearchImg} />
-          搜尋此區域景點
-        </SearchButton>
       </MapContainer>
       <CardsContainer>
         <JourneyList
@@ -331,7 +333,7 @@ const Map = () => {
   );
 };
 
-export default Map;
+export default SingleJourney;
 
 const Container = styled.div`
   display: flex;
