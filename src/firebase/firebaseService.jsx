@@ -206,6 +206,7 @@ export const addAttraction = async (
     return false;
   }
 };
+
 export const signInWithGoogle = async (googleToken) => {
   const credential = GoogleAuthProvider.credential(googleToken);
   return signInWithCredential(auth, credential);
@@ -227,7 +228,6 @@ export const updateUserProfile = async (user) => {
 };
 
 export const deleteAttraction = async (journeyId, placeId) => {
-  console.log(journeyId, placeId);
   try {
     const journeyCollectionRef = collection(
       db,

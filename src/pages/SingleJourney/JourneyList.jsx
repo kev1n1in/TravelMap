@@ -11,7 +11,13 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 
-const JourneyList = ({ journeyId, journeys, isLoading, error }) => {
+const JourneyList = ({
+  journeyId,
+  journeys,
+  isLoading,
+  error,
+  onClickCard,
+}) => {
   const navigate = useNavigate();
   const [newJourney, setNewJourney] = useState({
     title: "",
@@ -110,7 +116,10 @@ const JourneyList = ({ journeyId, journeys, isLoading, error }) => {
               <Box key={date} mb={2}>
                 <Typography variant="h6">{date}</Typography>
                 {groupedJourneys[date].map((journey) => (
-                  <JourneyCard key={journey.id}>
+                  <JourneyCard
+                    key={journey.id}
+                    onClick={() => onClickCard(journey)}
+                  >
                     {journey.photos && journey.photos.length > 0 && (
                       <Box mb={1}>
                         <JourneyImage
@@ -153,13 +162,15 @@ JourneyList.propTypes = {
     PropTypes.shape({
       id: PropTypes.string,
       name: PropTypes.string,
+      photos: PropTypes.array,
     })
-  ).isRequired,
+  ),
   isLoading: PropTypes.bool.isRequired,
   error: PropTypes.shape({
     message: PropTypes.string,
   }),
   journeyId: PropTypes.string,
+  onClickCard: PropTypes.func,
 };
 
 const JourneyTitle = styled.input`
