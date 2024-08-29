@@ -17,7 +17,6 @@ import {
 import { db } from "./firebaseConfig";
 import dayjs from "dayjs";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { auth } from "./firebaseConfig";
 import { getAuth } from "firebase/auth";
 
 export const handleCreateJourney = async (title, description, navigate) => {
@@ -205,11 +204,11 @@ export const addAttraction = async (
   }
 };
 
-export const signInWithGoogle = async (googleToken) => {
-  const credential = GoogleAuthProvider.credential(googleToken);
-  return signInWithCredential(auth, credential);
+export const signInWithGoogle = async (accessToken) => {
+  const auth = getAuth();
+  const googleCredential = GoogleAuthProvider.credential(null, accessToken);
+  return await signInWithCredential(auth, googleCredential);
 };
-
 export const updateUserProfile = async (user) => {
   const userRef = doc(db, "users", user.uid);
   return setDoc(

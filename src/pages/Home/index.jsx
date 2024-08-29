@@ -8,8 +8,6 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
-  CardContent,
-  Typography,
   Button,
   Input,
   Dialog,
@@ -26,7 +24,7 @@ import {
   deleteJourney,
 } from "../../firebase/firebaseService";
 import defaultImg from "./default-img.jpg";
-import trash from "./trash-bin.png";
+import trash from "./trash-bin-white.png";
 import { motion } from "framer-motion";
 
 const Home = () => {
@@ -38,6 +36,7 @@ const Home = () => {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [journeyTimes, setJourneyTimes] = useState({});
   const queryClient = useQueryClient();
+  const [selectedDocName, setSelectedDocName] = useState("");
 
   const {
     data,
@@ -57,13 +56,13 @@ const Home = () => {
   useEffect(() => {
     if (status === "success" && data) {
       const allDocs = data.pages.flatMap((page) => page.journeys);
+
       const filtered = allDocs.filter((doc) => {
         return (
           doc.title.toLowerCase().includes(search.toLowerCase()) ||
           doc.description.toLowerCase().includes(search.toLowerCase())
         );
       });
-      setFilteredSearch(filtered);
 
       const journeyTimesData = {};
       filtered.forEach((doc) => {
@@ -75,13 +74,19 @@ const Home = () => {
             );
           });
           journeyTimesData[doc.id] = {
-            start: `${sortedJourneys[0].date} ${sortedJourneys[0].startTime}`,
-            end: `${sortedJourneys[sortedJourneys.length - 1].date} ${
-              sortedJourneys[sortedJourneys.length - 1].startTime
-            }`,
+            start: sortedJourneys[0].date,
+            end: sortedJourneys[sortedJourneys.length - 1].date,
           };
         }
       });
+
+      const sortedFiltered = filtered.sort((a, b) => {
+        const aStart = journeyTimesData[a.id]?.start;
+        const bStart = journeyTimesData[b.id]?.start;
+        return new Date(bStart) - new Date(aStart);
+      });
+
+      setFilteredSearch(sortedFiltered);
       setJourneyTimes(journeyTimesData);
     }
   }, [data, search, status]);
@@ -102,8 +107,9 @@ const Home = () => {
     },
   });
 
-  const handleOpenDialog = (docId) => {
+  const handleOpenDialog = (docId, docName) => {
     setSelectedDoc(docId);
+    setSelectedDocName(docName); // 這行新增了 docName 的設置
     setOpen(true);
   };
 
@@ -162,6 +168,7 @@ const Home = () => {
           variant="contained"
           color="primary"
           onClick={() => navigate("/journey")}
+          style={{ background: "#57c2e9" }}
         >
           新增行程
         </Button>
@@ -169,8 +176,6 @@ const Home = () => {
 
       <GridContainer>
         {filteredSearch.map((doc) => {
-          console.log(doc.journey);
-
           return (
             <Card
               key={doc.id}
@@ -178,60 +183,59 @@ const Home = () => {
               onClick={() => handleCardClick(doc.id)}
             >
               <CardContent
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  position: "relative",
-                }}
-              >
-                <ImageContainer>
-                  {doc.journey &&
+                backgroundImage={
+                  doc.journey &&
                   doc.journey.length > 0 &&
                   doc.journey[0].photos &&
-                  doc.journey[0].photos.length > 0 ? (
-                    <JourneyImage
-                      src={doc.journey[0].photos[0]}
-                      alt={doc.journey[0].name || "無標題"}
-                    />
-                  ) : (
-                    <JourneyImage src={defaultImg} alt="Default" />
-                  )}
-                </ImageContainer>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography variant="h6">{doc.title || "無標題"}</Typography>
+                  doc.journey[0].photos.length > 0
+                    ? doc.journey[0].photos[0]
+                    : defaultImg
+                }
+              >
+                <Overlay>
+                  <ImageContainer></ImageContainer>
+                  <JourneyDetailContainer>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <JourneyTitle>{doc.title || "無標題"}</JourneyTitle>
+                    </div>
+                    <JourneyTime>
+                      {journeyTimes[doc.id] &&
+                      journeyTimes[doc.id].start &&
+                      journeyTimes[doc.id].end
+                        ? `${journeyTimes[doc.id].start} ~ ${
+                            journeyTimes[doc.id].end
+                          }`
+                        : "尚未新增行程"}
+                    </JourneyTime>
+                    <DescriptionContainer>
+                      <JourneyDescription variant="body2" color="textSecondary">
+                        {doc.description || "無描述"}
+                      </JourneyDescription>
+                    </DescriptionContainer>
+                  </JourneyDetailContainer>
                   <RemoveButton
                     onClick={(event) => {
                       event.stopPropagation();
-                      handleOpenDialog("documentId");
+                      handleOpenDialog(doc.id, doc.title); // 這裡傳遞 doc.title 作為 docName
                     }}
-                    whileHover={{ scale: 1.2 }} // 當鼠標懸停時，按鈕會放大
-                    whileTap={{ scale: 0.8 }} // 當按鈕被點擊時，按鈕會縮小
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
                   >
                     <RemoveImg
                       src={trash}
                       alt="刪除"
-                      initial={{ rotate: 0 }} // 初始狀態
-                      animate={{ rotate: [0, 20, -20, 0] }} // 當被點擊時旋轉
-                      transition={{ duration: 0.5 }} // 旋轉動畫的時長
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: [0, 20, -20, 0] }}
+                      transition={{ duration: 0.5 }}
                     />
                   </RemoveButton>
-                </div>
-                {journeyTimes[doc.id] && (
-                  <Typography>
-                    {`${journeyTimes[doc.id].start} ~ ${
-                      journeyTimes[doc.id].end
-                    }`}
-                  </Typography>
-                )}
-                <Typography variant="body2" color="textSecondary">
-                  {doc.description || "無描述"}
-                </Typography>
+                </Overlay>
               </CardContent>
             </Card>
           );
@@ -239,7 +243,7 @@ const Home = () => {
 
         {isFetchingNextPage && (
           <LoaderWrapper>
-            <RingLoader color="#123abc" />
+            <RingLoader color="#57c2e9" />
           </LoaderWrapper>
         )}
       </GridContainer>
@@ -248,7 +252,9 @@ const Home = () => {
         <DialogTitle>確認刪除</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            您確定要刪除此行程嗎？此操作無法撤銷。
+            您確定要刪除
+            <span style={{ color: "#d02c2c" }}>{selectedDocName}</span>
+            嗎？此操作無法撤銷。
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -261,13 +267,19 @@ const Home = () => {
     </Container>
   );
 };
-
 const Container = styled.div`
   height: 120vh;
   overflow-y: auto;
   padding: 20px;
 `;
-
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+`;
 const Form = styled.div`
   margin: 20px;
   display: flex;
@@ -279,6 +291,22 @@ const GridContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
+`;
+
+const CardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 250px;
+  background-image: url(${(props) => props.backgroundImage || defaultImg});
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 const Title = styled.h2`
@@ -293,25 +321,36 @@ const LoaderWrapper = styled.div`
   padding: 20px;
 `;
 
+const JourneyDetailContainer = styled.div`
+  margin: 12px 0 0 8px;
+`;
+const JourneyTitle = styled.h2`
+  padding-top: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+`;
+
 const ImageContainer = styled.div`
   width: 100%;
   height: 140px;
-  overflow: hidden;
+  background-image: url(${(props) => props.backgroundImage});
+  background-size: cover;
+  background-position: center;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
-const JourneyImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease-in-out;
-
-  &:hover {
-    transform: scale(1.1);
-  }
+const JourneyTime = styled.span`
+  margin: 8px 0;
+  color: white;
 `;
-
 const RemoveButton = styled(motion.button)`
+  position: absolute;
+  right: 16px;
+  bottom: 4px;
   margin-top: 12px;
   background: none;
   border: none;
@@ -319,13 +358,19 @@ const RemoveButton = styled(motion.button)`
   cursor: pointer;
 `;
 
-const RemoveImg = styled(motion.img)`
-  width: 36px;
-  height: 36px;
+const RemoveImg = styled(motion.img)``;
+const DescriptionContainer = styled.div`
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 1;
+  white-space: normal;
+  max-width: 200px;
+`;
 
-  &:hover {
-    opacity: 0.7;
-  }
+const JourneyDescription = styled.span`
+  color: #fff;
 `;
 
 export default Home;

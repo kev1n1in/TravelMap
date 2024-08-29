@@ -10,6 +10,14 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+} from "@mui/material";
 
 const Modal = ({
   placeDetails,
@@ -22,9 +30,11 @@ const Modal = ({
   tripDate,
   tripStartTime,
   onCreate,
+  journeyId,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
@@ -44,6 +54,21 @@ const Modal = ({
     setCurrentIndex(
       (prevIndex) => (prevIndex - 1 + photoUrls.length) % photoUrls.length
     );
+  };
+
+  const handleOpenDialog = () => {
+    setOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    if (onDelete) {
+      onDelete(journeyId, placeDetails?.place_id);
+      setOpen(false);
+    }
   };
 
   if (!placeDetails) return null;
@@ -100,11 +125,26 @@ const Modal = ({
           ) : (
             <ButtonWrapper>
               <ModalButton onClick={onUpdate}>更新行程時間</ModalButton>
-              <ModalButton onClick={onDelete}>刪除此地標</ModalButton>
+              <ModalButton onClick={handleOpenDialog}>刪除此地標</ModalButton>
             </ButtonWrapper>
           )}
         </InfoContainer>
       </ModalContainer>
+
+      <Dialog open={open} onClose={handleCloseDialog}>
+        <DialogTitle>確認刪除</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            您確定要刪除此地標嗎？此操作無法撤銷。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>取消</Button>
+          <Button onClick={handleConfirmDelete} color="secondary">
+            確定刪除
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ModalOverlay>
   );
 };
