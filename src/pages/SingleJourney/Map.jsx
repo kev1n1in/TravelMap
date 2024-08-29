@@ -68,11 +68,11 @@ const Map = ({
               <div
                 style={{
                   fontSize: "16px",
-                  color: "#101213",
+                  color: "#105073",
                   whiteSpace: "nowrap",
                   fontWeight: "700",
                   textShadow:
-                    "1px 1px 3px white, -1px -1px 3px white, -1px 1px 3px white, 1px -1px 3px white",
+                    "1px 1px 3px white, -1px -1px 3px white, -1px 1px 3px white, 1px -1px 3px white, 2px 2px 5px rgba(0, 0, 0, 0.5)",
                 }}
               >
                 {place.name}
