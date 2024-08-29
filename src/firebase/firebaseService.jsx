@@ -43,12 +43,9 @@ export const createNewJourney = async (title, description, navigate) => {
       description: description,
       createdAt: new Date().toISOString(),
     });
-
-    alert("新行程已成功創建！");
     navigate(`/journey/${newDocRef.id}`);
   } catch (error) {
     console.error("Error creating journey document:", error);
-    alert("出了一點問題：" + error.message);
   }
 };
 
@@ -284,6 +281,29 @@ export const fetchJourneyInfo = async (journeyId) => {
     }
   } catch (error) {
     console.error("Error fetching journey:", error);
+    throw error;
+  }
+};
+
+export const getUserProfile = async () => {
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    const userRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      return userDoc.data();
+    } else {
+      throw new Error("User profile not found");
+    }
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
     throw error;
   }
 };

@@ -9,14 +9,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Button,
-} from "@mui/material";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 const Modal = ({
   placeDetails,
@@ -33,10 +26,7 @@ const Modal = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
-  const [open, setOpen] = useState(false);
-
-  // console.log("journeyId", journeyId);
-  // console.log("placeDetails", placeDetails);
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
@@ -59,17 +49,17 @@ const Modal = ({
   };
 
   const handleOpenDialog = () => {
-    setOpen(true);
+    setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
-    setOpen(false);
+    setOpenDialog(false);
   };
 
   const handleConfirmDelete = () => {
     if (onDelete) {
       onDelete(journeyId);
-      setOpen(false);
+      setOpenDialog(false);
     }
   };
 
@@ -132,21 +122,24 @@ const Modal = ({
           )}
         </InfoContainer>
       </ModalContainer>
-
-      <Dialog open={open} onClose={handleCloseDialog}>
-        <DialogTitle>確認刪除</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            您確定要刪除此地標嗎？此操作無法撤銷。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleConfirmDelete} color="secondary">
-            確定刪除
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title="確認刪除"
+        contentText={
+          <span>
+            您確定要刪除{" "}
+            <span style={{ color: "#57c2e9", fontWeight: "500" }}>
+              {placeDetails.name}
+            </span>{" "}
+            嗎？ 此操作無法撤銷。
+          </span>
+        }
+        confirmButtonText="確定刪除"
+        cancelButtonText="取消"
+        confirmButtonColor="secondary"
+      />
     </ModalOverlay>
   );
 };
