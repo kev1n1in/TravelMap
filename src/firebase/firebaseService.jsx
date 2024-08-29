@@ -19,7 +19,7 @@ import dayjs from "dayjs";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { getAuth } from "firebase/auth";
 
-export const handleCreateJourney = async (title, description, navigate) => {
+export const createNewJourney = async (title, description, navigate) => {
   try {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -44,7 +44,6 @@ export const handleCreateJourney = async (title, description, navigate) => {
       createdAt: new Date().toISOString(),
     });
 
-    console.log("New journey document created with ID:", newDocRef.id);
     alert("新行程已成功創建！");
     navigate(`/journey/${newDocRef.id}`);
   } catch (error) {
@@ -53,7 +52,7 @@ export const handleCreateJourney = async (title, description, navigate) => {
   }
 };
 
-export const handleSaveJourney = async (documentId, title, description) => {
+export const saveJourneyInfo = async (documentId, title, description) => {
   const journeyRef = doc(db, "journeys", documentId);
   await updateDoc(journeyRef, {
     title,
@@ -141,7 +140,7 @@ export async function fetchUserJourneys(
   }
 }
 
-export const fetchJourney = async (journeyId) => {
+export const fetchAttractions = async (journeyId) => {
   try {
     if (!journeyId) {
       return null;
@@ -163,9 +162,7 @@ export const fetchJourney = async (journeyId) => {
 export const deleteJourney = async (journeyId) => {
   try {
     const journeyDocRef = doc(db, "journeys", journeyId);
-
     await deleteDoc(journeyDocRef);
-    console.log("Journey deleted successfully!");
   } catch (error) {
     console.error("Error deleting journey document:", error);
     throw new Error("Failed to delete journey");
@@ -252,7 +249,6 @@ export const updateAttraction = async (
   newDate,
   newStartTime
 ) => {
-  console.log(journeyId, placeId, newDate, newStartTime);
   try {
     const journeyCollectionRef = collection(
       db,
@@ -276,13 +272,13 @@ export const updateAttraction = async (
   }
 };
 
-export const fetchSingleJourney = async (journeyId) => {
+export const fetchJourneyInfo = async (journeyId) => {
   try {
     const journeyDocRef = doc(db, "journeys", journeyId);
     const journeyDoc = await getDoc(journeyDocRef);
 
     if (journeyDoc.exists()) {
-      return journeyDoc.data(); // 返回該文件的資料
+      return journeyDoc.data();
     } else {
       throw new Error("Journey not found");
     }
