@@ -44,12 +44,9 @@ export const handleCreateJourney = async (title, description, navigate) => {
       createdAt: new Date().toISOString(),
     });
 
-    console.log("New journey document created with ID:", newDocRef.id);
-    alert("新行程已成功創建！");
     navigate(`/journey/${newDocRef.id}`);
   } catch (error) {
     console.error("Error creating journey document:", error);
-    alert("出了一點問題：" + error.message);
   }
 };
 
@@ -192,13 +189,11 @@ export const addAttraction = async (
       address: placeDetail.formatted_address,
       place_id: placeDetail.place_id,
       photos: photos,
-      date: dayjs(tripDate).format("YYYY-MM-DD"),
-      startTime: dayjs(tripStartTime).format("HH:mm"),
+      date: tripDate,
+      startTime: tripStartTime,
       lat: placeDetail.geometry.location.lat(),
       lng: placeDetail.geometry.location.lng(),
     });
-
-    console.log("New attraction added successfully!");
     return true;
   } catch (error) {
     console.error("Error adding place to Firestore:", error);
@@ -284,12 +279,35 @@ export const fetchSingleJourney = async (journeyId) => {
     const journeyDoc = await getDoc(journeyDocRef);
 
     if (journeyDoc.exists()) {
-      return journeyDoc.data(); // 返回該文件的資料
+      return journeyDoc.data();
     } else {
       throw new Error("Journey not found");
     }
   } catch (error) {
     console.error("Error fetching journey:", error);
+    throw error;
+  }
+};
+
+export const getUserProfile = async () => {
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    const userRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      return userDoc.data();
+    } else {
+      throw new Error("User profile not found");
+    }
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
     throw error;
   }
 };

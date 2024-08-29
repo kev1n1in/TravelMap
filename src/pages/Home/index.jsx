@@ -18,6 +18,7 @@ import defaultImg from "./default-img.jpg";
 import trash from "./trash-bin-white.png";
 import { motion } from "framer-motion";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import AlertMessage from "../../components/AlertMessage";
 
 const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
@@ -29,6 +30,8 @@ const Home = () => {
   const [journeyTimes, setJourneyTimes] = useState({});
   const queryClient = useQueryClient();
   const [selectedDocName, setSelectedDocName] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertKey, setAlertKey] = useState(0);
 
   const {
     data,
@@ -87,15 +90,20 @@ const Home = () => {
     setSearch(event.target.value);
   };
 
+  const showMessage = (msg) => {
+    setAlertMessage(msg);
+    setAlertKey(Date.now());
+  };
+
   const deleteMutation = useMutation({
     mutationFn: deleteJourney,
     onSuccess: () => {
-      alert("行程刪除成功！");
+      showMessage("行程刪除成功！");
       queryClient.invalidateQueries(["userJourneys", user?.uid]);
       handleCloseDialog();
     },
     onError: () => {
-      alert("刪除行程時出現錯誤");
+      showMessage("刪除行程時出現錯誤");
     },
   });
 
@@ -256,6 +264,10 @@ const Home = () => {
         cancelButtonText="取消"
         confirmButtonColor="secondary"
       />
+
+      {alertMessage && (
+        <AlertMessage message={alertMessage} keyProp={alertKey} />
+      )}
     </Container>
   );
 };
@@ -319,6 +331,7 @@ const LoaderWrapper = styled.div`
 const JourneyDetailContainer = styled.div`
   margin: 12px 0 0 8px;
 `;
+
 const JourneyTitle = styled.h2`
   padding-top: 8px;
   font-size: 20px;
@@ -342,6 +355,7 @@ const JourneyTime = styled.span`
   margin: 8px 0;
   color: white;
 `;
+
 const RemoveButton = styled(motion.button)`
   position: absolute;
   right: 16px;
@@ -354,6 +368,7 @@ const RemoveButton = styled(motion.button)`
 `;
 
 const RemoveImg = styled(motion.img)``;
+
 const DescriptionContainer = styled.div`
   display: -webkit-box;
   -webkit-box-orient: vertical;

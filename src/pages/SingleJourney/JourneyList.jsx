@@ -17,6 +17,8 @@ import localeData from "dayjs/plugin/localeData";
 import "dayjs/locale/zh-tw";
 import clock from "./img/clock.png";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import AlertMessage from "../../components/AlertMessage";
+import travelGif from "./img/travelImg.png";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -39,6 +41,7 @@ const JourneyList = ({
   });
   const [open, setOpen] = useState(false);
   const [selectedJourney, setSelectedJourney] = useState(null);
+  const [alertMessage, setAlertMessage] = useState("");
 
   const handleOpenDialog = (journey) => {
     setSelectedJourney(journey);
@@ -104,12 +107,12 @@ const JourneyList = ({
         ? handleSaveJourney(journeyId, title, description)
         : handleCreateJourney(title, description, navigate),
     onSuccess: () => {
-      alert(journeyId ? "行程已成功保存！" : "行程創建成功！");
+      setAlertMessage(journeyId ? "行程已成功保存！" : "行程創建成功！");
       setNewJourney({ title: "", description: "" });
       handleWindowReload();
     },
     onError: () => {
-      alert("操作行程時出現錯誤");
+      setAlertMessage("操作行程時出現錯誤");
     },
   });
 
@@ -238,11 +241,16 @@ const JourneyList = ({
             </JourneyDateSection>
           ))
         ) : (
-          <Message>趕緊新增行程吧</Message>
+          <>
+            <TravelImg src={travelGif} />
+            <Message>趕緊新增行程吧</Message>
+          </>
         )}
         <ActionButton onClick={handleBackHome}>返回行程總覽</ActionButton>
       </ContentWrapper>
-
+      {alertMessage && (
+        <AlertMessage message={alertMessage} severity="success" />
+      )}
       <ConfirmDialog
         open={open}
         onClose={handleCloseDialog}
@@ -427,10 +435,13 @@ const ActionButton = styled.button`
   }
 
   &:hover {
-    background-color: #0056b3;
+    background-color: rgb(0, 58, 94);
   }
 `;
-
+const TravelImg = styled.img`
+  height: 280px;
+  width: auto;
+`;
 const Message = styled.p`
   font-size: 1rem;
   color: #333;

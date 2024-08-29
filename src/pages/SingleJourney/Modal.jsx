@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { addAttraction } from "../../firebase/firebaseService";
 import PropTypes from "prop-types";
 import { styled } from "styled-components";
 import closeImg from "./img/close.png";
@@ -10,11 +9,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
 import ConfirmDialog from "../../components/ConfirmDialog";
 
 const Modal = ({
-  journeyId,
   placeDetails,
   onClose,
   modalType,
@@ -24,11 +21,12 @@ const Modal = ({
   onChangeTime,
   tripDate,
   tripStartTime,
+  onCreate,
+  journeyId,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
   const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
@@ -50,40 +48,6 @@ const Modal = ({
     );
   };
 
-  const createMutation = useMutation({
-    mutationFn: async (newAttraction) => {
-      await addAttraction(
-        newAttraction.journeyId,
-        newAttraction.placeDetails,
-        newAttraction.tripDate,
-        newAttraction.tripStartTime
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["journeys", journeyId]);
-      onClose();
-      alert("建立行程成功！");
-    },
-    onError: (error) => {
-      alert("建立行程失敗，請重試");
-      console.error("Error:", error);
-    },
-  });
-
-  const handleCreate = () => {
-    if (!tripDate || !tripStartTime) {
-      alert("請選擇日期和時間");
-      return;
-    }
-
-    createMutation.mutate({
-      journeyId,
-      placeDetails,
-      tripDate,
-      tripStartTime,
-    });
-  };
-
   const handleOpenDialog = () => {
     setOpen(true);
   };
@@ -101,13 +65,11 @@ const Modal = ({
 
   if (!placeDetails) return null;
 
-  const photos = placeDetails.photos || [];
-
   return (
     <ModalOverlay>
       <ModalContainer>
         <PhotosContainer>
-          {photos && photos.length > 0 && (
+          {placeDetails.photos && placeDetails.photos.length > 0 && (
             <>
               <SlideButton onClick={prevSlide}>◀</SlideButton>
               <SlideImage
@@ -150,7 +112,7 @@ const Modal = ({
 
           {modalType === "create" ? (
             <ButtonWrapper>
-              <ModalButton onClick={handleCreate}>新增至行程</ModalButton>
+              <ModalButton onClick={onCreate}>新增至行程</ModalButton>
             </ButtonWrapper>
           ) : (
             <ButtonWrapper>
@@ -199,6 +161,7 @@ Modal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onDelete: PropTypes.func,
   onUpdate: PropTypes.func,
+  onCreate: PropTypes.func,
   onChangeDate: PropTypes.func,
   onChangeTime: PropTypes.func,
   tripDate: PropTypes.instanceOf(dayjs),
@@ -298,7 +261,7 @@ const ButtonWrapper = styled.div`
 `;
 
 const ModalButton = styled.button`
-  background-color: #007bff;
+  background-color: #57c2e9;
   color: white;
   border: none;
   padding: 10px 20px;
