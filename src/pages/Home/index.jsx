@@ -222,7 +222,7 @@ const Home = () => {
                   <RemoveButton
                     onClick={(event) => {
                       event.stopPropagation();
-                      handleOpenDialog(doc.id, doc.title); // 這裡傳遞 doc.title 作為 docName
+                      handleOpenDialog(doc.id, doc.title);
                     }}
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}

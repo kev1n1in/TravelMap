@@ -1,15 +1,8 @@
-// 增加行程
-// 更新行程
-// 刪除行程
-// 搜尋行稱
-
 export const initialState = {
   isModalOpen: false,
   modalType: null,
   jourenyData: null,
 };
-
-console.log("jourenyData", initialState.jourenyData);
 
 export const modalActionTypes = {
   OPEN_MODAL: "OPEN_MODAL",

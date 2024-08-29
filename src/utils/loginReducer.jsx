@@ -35,7 +35,7 @@ export function loginReducer(state, action) {
 
     case "LOGOUT":
       localStorage.removeItem("isLoggedIn");
-      localStorage.removeItem("userId"); // 清除保存的用户ID
+      localStorage.removeItem("userId");
       return {
         ...initialState,
       };
