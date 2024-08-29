@@ -2,7 +2,7 @@ import {
   GoogleMap,
   useJsApiLoader,
   MarkerF,
-  Polyline,
+  PolylineF,
 } from "@react-google-maps/api";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
@@ -200,10 +200,17 @@ const Map = () => {
     },
   });
 
-  const handleDelete = async () => {
+  const handleDelete = async (journeyId, journeyPlaceId) => {
+    const placeId = placeDetails?.place_id || journeyPlaceId;
+
+    if (!placeId) {
+      console.error("placeId is undefined. Cannot delete journey.");
+      return;
+    }
+
     deleteMutation.mutate({
       journeyId,
-      placeId: placeDetails.place_id,
+      placeId: placeId,
     });
   };
 
@@ -241,7 +248,7 @@ const Map = () => {
           onUnmount={handleMapUnmount}
         >
           {polylinePath.length > 1 && (
-            <Polyline
+            <PolylineF
               key={JSON.stringify(polylinePath)}
               path={polylinePath}
               options={{
@@ -325,6 +332,8 @@ const Map = () => {
           onUpdate={handleUpdate}
           onClickCard={handleCardClick}
           onDelete={handleDelete}
+          sortedJourney={sortedJourney}
+          placeId={placeDetails?.place_id}
         />
       </CardsContainer>
     </Container>
