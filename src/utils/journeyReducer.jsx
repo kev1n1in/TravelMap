@@ -4,8 +4,6 @@ export const initialState = {
   jourenyData: null,
 };
 
-console.log("jourenyData", initialState.jourenyData);
-
 export const modalActionTypes = {
   OPEN_MODAL: "OPEN_MODAL",
   CLOSE_MODAL: "CLOSE_MODAL",

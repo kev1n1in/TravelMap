@@ -26,7 +26,7 @@ const Modal = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
@@ -49,17 +49,17 @@ const Modal = ({
   };
 
   const handleOpenDialog = () => {
-    setOpen(true);
+    setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
-    setOpen(false);
+    setOpenDialog(false);
   };
 
   const handleConfirmDelete = () => {
     if (onDelete) {
-      onDelete(journeyId, placeDetails?.place_id);
-      setOpen(false);
+      onDelete(journeyId);
+      setOpenDialog(false);
     }
   };
 
@@ -122,17 +122,18 @@ const Modal = ({
           )}
         </InfoContainer>
       </ModalContainer>
-
       <ConfirmDialog
-        open={open}
+        open={openDialog}
         onClose={handleCloseDialog}
         onConfirm={handleConfirmDelete}
         title="確認刪除"
         contentText={
           <span>
             您確定要刪除{" "}
-            <span style={{ color: "#d02c2c" }}>{placeDetails.name}</span> 嗎？
-            此操作無法撤銷。
+            <span style={{ color: "#57c2e9", fontWeight: "500" }}>
+              {placeDetails.name}
+            </span>{" "}
+            嗎？ 此操作無法撤銷。
           </span>
         }
         confirmButtonText="確定刪除"
