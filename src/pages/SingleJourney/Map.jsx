@@ -6,6 +6,7 @@ import {
 } from "@react-google-maps/api";
 import bluePin from "./img/bluePin.png";
 import PropTypes from "prop-types";
+import React from "react";
 const Map = ({
   onUnmount,
   polylinePath,
@@ -43,9 +44,8 @@ const Map = ({
           (journey) => journey.lat === lat && journey.lng === lng
         );
         return (
-          <>
+          <React.Fragment key={place.place_id}>
             <MarkerF
-              key={place.place_id}
               position={{ lat: lat, lng: lng }}
               onClick={() => onClickMarker(place, isInJourneys)}
               icon={
@@ -78,7 +78,7 @@ const Map = ({
                 {place.name}
               </div>
             </OverlayView>
-          </>
+          </React.Fragment>
         );
       })}
       {sortedJourney?.map((journey, index) => (
