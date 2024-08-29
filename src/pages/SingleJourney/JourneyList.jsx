@@ -10,20 +10,13 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import trash from "./img/trash-bin.png";
 import { motion } from "framer-motion";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Button,
-} from "@mui/material";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import weekday from "dayjs/plugin/weekday";
 import localeData from "dayjs/plugin/localeData";
 import "dayjs/locale/zh-tw";
 import clock from "./img/clock.png";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -250,20 +243,22 @@ const JourneyList = ({
         <ActionButton onClick={handleBackHome}>返回行程總覽</ActionButton>
       </ContentWrapper>
 
-      <Dialog open={open} onClose={handleCloseDialog}>
-        <DialogTitle>確認刪除</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            您確定要刪除此地標嗎？此操作無法撤銷。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleConfirmDelete} color="secondary">
-            確定刪除
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={open}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title="確認刪除"
+        contentText={
+          <span>
+            您確定要刪除{" "}
+            <span style={{ color: "#d02c2c" }}>{selectedJourney?.name}</span>{" "}
+            嗎？此操作無法撤銷。
+          </span>
+        }
+        confirmButtonText="確定刪除"
+        cancelButtonText="取消"
+        confirmButtonColor="secondary"
+      />
     </ListWrapper>
   );
 };

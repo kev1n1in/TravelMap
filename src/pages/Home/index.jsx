@@ -6,16 +6,7 @@ import {
 } from "@tanstack/react-query";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import {
-  Card,
-  Button,
-  Input,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from "@mui/material";
+import { Card, Button, Input } from "@mui/material";
 import { RingLoader } from "react-spinners";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../firebase/firebaseConfig";
@@ -26,6 +17,7 @@ import {
 import defaultImg from "./default-img.jpg";
 import trash from "./trash-bin-white.png";
 import { motion } from "framer-motion";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
@@ -109,7 +101,7 @@ const Home = () => {
 
   const handleOpenDialog = (docId, docName) => {
     setSelectedDoc(docId);
-    setSelectedDocName(docName); // 這行新增了 docName 的設置
+    setSelectedDocName(docName);
     setOpen(true);
   };
 
@@ -222,7 +214,7 @@ const Home = () => {
                   <RemoveButton
                     onClick={(event) => {
                       event.stopPropagation();
-                      handleOpenDialog(doc.id, doc.title); // 這裡傳遞 doc.title 作為 docName
+                      handleOpenDialog(doc.id, doc.title);
                     }}
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}
@@ -248,30 +240,32 @@ const Home = () => {
         )}
       </GridContainer>
 
-      <Dialog open={open} onClose={handleCloseDialog}>
-        <DialogTitle>確認刪除</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            您確定要刪除
-            <span style={{ color: "#d02c2c" }}>{selectedDocName}</span>
+      <ConfirmDialog
+        open={open}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title="確認刪除"
+        contentText={
+          <span>
+            您確定要刪除{" "}
+            <span style={{ color: "#d02c2c" }}>{selectedDocName}</span>{" "}
             嗎？此操作無法撤銷。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleConfirmDelete} color="secondary">
-            確定刪除
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </span>
+        }
+        confirmButtonText="確定刪除"
+        cancelButtonText="取消"
+        confirmButtonColor="secondary"
+      />
     </Container>
   );
 };
+
 const Container = styled.div`
   height: 120vh;
   overflow-y: auto;
   padding: 20px;
 `;
+
 const Overlay = styled.div`
   position: absolute;
   top: 0;
@@ -280,6 +274,7 @@ const Overlay = styled.div`
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.4);
 `;
+
 const Form = styled.div`
   margin: 20px;
   display: flex;

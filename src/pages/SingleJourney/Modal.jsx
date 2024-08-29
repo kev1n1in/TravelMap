@@ -11,14 +11,7 @@ import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Button,
-} from "@mui/material";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 const Modal = ({
   journeyId,
@@ -168,20 +161,22 @@ const Modal = ({
         </InfoContainer>
       </ModalContainer>
 
-      <Dialog open={open} onClose={handleCloseDialog}>
-        <DialogTitle>確認刪除</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            您確定要刪除此地標嗎？此操作無法撤銷。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleConfirmDelete} color="secondary">
-            確定刪除
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={open}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title="確認刪除"
+        contentText={
+          <span>
+            您確定要刪除{" "}
+            <span style={{ color: "#d02c2c" }}>{placeDetails.name}</span> 嗎？
+            此操作無法撤銷。
+          </span>
+        }
+        confirmButtonText="確定刪除"
+        cancelButtonText="取消"
+        confirmButtonColor="secondary"
+      />
     </ModalOverlay>
   );
 };
