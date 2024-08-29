@@ -1,8 +1,3 @@
-// 增加行程
-// 更新行程
-// 刪除行程
-// 搜尋行稱
-
 export const initialState = {
   isModalOpen: false,
   modalType: null,

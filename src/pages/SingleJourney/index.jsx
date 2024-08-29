@@ -20,6 +20,7 @@ import {
   addAttraction,
 } from "../../firebase/firebaseService";
 import Map from "./Map";
+import AlertMessage from "../../components/AlertMessage";
 
 const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
@@ -36,6 +37,8 @@ const SingleJourney = () => {
   );
   const [polylinePath, setPolylinePath] = useState([]);
   const [sortedJourney, setSortedJourney] = useState([]);
+  const [alertMessages, setAlertMessages] = useState([]);
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: API_KEY,
     libraries,
@@ -128,7 +131,7 @@ const SingleJourney = () => {
 
   const handleMarkerClick = (data, isJourney) => {
     if (!journeyId) {
-      alert("請先填寫行程名稱和描述");
+      setAlertMessages((prev) => [...prev, "請先填寫行程名稱和描述"]);
       return;
     }
     if (map) {
@@ -143,7 +146,7 @@ const SingleJourney = () => {
 
   const handleCardClick = (data) => {
     if (!journeyId) {
-      alert("請先填寫行程名稱和描述");
+      setAlertMessages((prev) => [...prev, "請先填寫行程名稱和描述"]);
       return;
     }
     if (map) {
@@ -175,19 +178,20 @@ const SingleJourney = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
       dispatch({ type: modalActionTypes.CLOSE_MODAL });
-      alert("建立行程成功！");
+      setAlertMessages((prev) => [...prev, "建立行程成功！"]);
     },
     onError: (error) => {
-      alert("建立行程失敗，請重試");
+      setAlertMessages((prev) => [...prev, "建立行程失敗，請重試"]);
       console.error("Error:", error);
     },
   });
 
   const handleCreate = () => {
     if (!tripDate || !tripStartTime) {
-      alert("請選擇日期和時間");
+      setAlertMessages((prev) => [...prev, "請選擇日期和時間"]);
       return;
     }
+
     const formattedTripDate = tripDate.format("YYYY-MM-DD");
     const formattedTripStartTime = tripStartTime.format("HH:mm");
 
@@ -199,7 +203,11 @@ const SingleJourney = () => {
     });
 
     if (isDuplicate) {
-      alert("此時間已經有行程安排，請選擇其他時間");
+      setAlertMessages((prev) => [
+        ...prev,
+        "此時間已經有行程安排，請選擇其他時間",
+      ]);
+
       return;
     }
 
@@ -223,17 +231,17 @@ const SingleJourney = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
       dispatch({ type: modalActionTypes.CLOSE_MODAL });
-      alert("更新行程成功！");
+      setAlertMessages((prev) => [...prev, "更新行程成功！"]);
     },
     onError: (error) => {
-      alert("更新行程失敗，請重試");
+      setAlertMessages((prev) => [...prev, "更新行程失敗，請重試"]);
       console.log("Error", error);
     },
   });
 
   const handleUpdate = () => {
     if (!tripDate || !tripStartTime) {
-      alert("請選擇日期和時間");
+      setAlertMessages((prev) => [...prev, "請選擇日期和時間"]);
       return;
     }
 
@@ -248,7 +256,10 @@ const SingleJourney = () => {
     });
 
     if (isDuplicate) {
-      alert("此時間已經有行程安排，請選擇其他時間");
+      setAlertMessages((prev) => [
+        ...prev,
+        "此時間已經有行程安排，請選擇其他時間",
+      ]);
       return;
     }
     updateMutation.mutate({
@@ -266,10 +277,10 @@ const SingleJourney = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
       dispatch({ type: modalActionTypes.CLOSE_MODAL });
-      alert("刪除行程成功！");
+      setAlertMessages((prev) => [...prev, "刪除行程成功！"]);
     },
     onError: (error) => {
-      alert("刪除行程失敗，請重試");
+      setAlertMessages((prev) => [...prev, "刪除行程失敗，請重試"]);
       console.log("Error", error);
     },
   });
@@ -336,6 +347,9 @@ const SingleJourney = () => {
           placeId={placeDetails?.place_id}
         />
       </CardsContainer>
+      {alertMessages?.map((message, index) => (
+        <AlertMessage key={index} message={message} severity="success" />
+      ))}
     </Container>
   );
 };

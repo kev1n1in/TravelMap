@@ -10,20 +10,15 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import trash from "./img/trash-bin.png";
 import { motion } from "framer-motion";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Button,
-} from "@mui/material";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import weekday from "dayjs/plugin/weekday";
 import localeData from "dayjs/plugin/localeData";
 import "dayjs/locale/zh-tw";
 import clock from "./img/clock.png";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import AlertMessage from "../../components/AlertMessage";
+import travelGif from "./img/travelImg.png";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -46,6 +41,7 @@ const JourneyList = ({
   });
   const [open, setOpen] = useState(false);
   const [selectedJourney, setSelectedJourney] = useState(null);
+  const [alertMessage, setAlertMessage] = useState("");
 
   const handleOpenDialog = (journey) => {
     setSelectedJourney(journey);
@@ -111,12 +107,12 @@ const JourneyList = ({
         ? handleSaveJourney(journeyId, title, description)
         : handleCreateJourney(title, description, navigate),
     onSuccess: () => {
-      alert(journeyId ? "行程已成功保存！" : "行程創建成功！");
+      setAlertMessage(journeyId ? "行程已成功保存！" : "行程創建成功！");
       setNewJourney({ title: "", description: "" });
       handleWindowReload();
     },
     onError: () => {
-      alert("操作行程時出現錯誤");
+      setAlertMessage("操作行程時出現錯誤");
     },
   });
 
@@ -245,25 +241,32 @@ const JourneyList = ({
             </JourneyDateSection>
           ))
         ) : (
-          <Message>趕緊新增行程吧</Message>
+          <>
+            <TravelImg src={travelGif} />
+            <Message>趕緊新增行程吧</Message>
+          </>
         )}
         <ActionButton onClick={handleBackHome}>返回行程總覽</ActionButton>
       </ContentWrapper>
-
-      <Dialog open={open} onClose={handleCloseDialog}>
-        <DialogTitle>確認刪除</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            您確定要刪除此地標嗎？此操作無法撤銷。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleConfirmDelete} color="secondary">
-            確定刪除
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {alertMessage && (
+        <AlertMessage message={alertMessage} severity="success" />
+      )}
+      <ConfirmDialog
+        open={open}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title="確認刪除"
+        contentText={
+          <span>
+            您確定要刪除{" "}
+            <span style={{ color: "#d02c2c" }}>{selectedJourney?.name}</span>{" "}
+            嗎？此操作無法撤銷。
+          </span>
+        }
+        confirmButtonText="確定刪除"
+        cancelButtonText="取消"
+        confirmButtonColor="secondary"
+      />
     </ListWrapper>
   );
 };
@@ -432,10 +435,13 @@ const ActionButton = styled.button`
   }
 
   &:hover {
-    background-color: #0056b3;
+    background-color: rgb(0, 58, 94);
   }
 `;
-
+const TravelImg = styled.img`
+  height: 280px;
+  width: auto;
+`;
 const Message = styled.p`
   font-size: 1rem;
   color: #333;
