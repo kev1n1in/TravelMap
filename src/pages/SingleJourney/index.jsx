@@ -22,7 +22,6 @@ import {
 import Map from "./Map";
 import { RingLoader } from "react-spinners";
 import AlertMessage from "../../components/AlertMessage";
-
 const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
 
@@ -30,8 +29,6 @@ const SingleJourney = () => {
   const [state, dispatch] = useReducer(modalReducer, initialState);
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(null);
-  const { id: journeyId } = useParams();
-  const queryClient = useQueryClient();
   const [tripDate, setTripDate] = useState(dayjs());
   const [tripStartTime, setTripStartTime] = useState(
     dayjs().set("hour", 14).startOf("hour")
@@ -39,7 +36,22 @@ const SingleJourney = () => {
   const [polylinePath, setPolylinePath] = useState([]);
   const [sortedJourney, setSortedJourney] = useState([]);
   const [alertMessages, setAlertMessages] = useState([]);
-
+  const { id: journeyId } = useParams();
+  const queryClient = useQueryClient();
+  const formattedTripDate = tripDate.format("YYYY-MM-DD");
+  const formattedTripStartTime = tripStartTime.format("HH:mm");
+  const checkDuplicateDate = (
+    journeyData,
+    formattedTripDate,
+    formattedTripStartTime
+  ) => {
+    return journeyData.some((journey) => {
+      return (
+        journey.date === formattedTripDate &&
+        journey.startTime === formattedTripStartTime
+      );
+    });
+  };
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: API_KEY,
     libraries,
@@ -123,13 +135,10 @@ const SingleJourney = () => {
       lat: mapCenter.lat(),
       lng: mapCenter.lng(),
     });
-  };
-
-  useEffect(() => {
-    if (center) {
+    setTimeout(() => {
       refetchPlace();
-    }
-  }, [center, refetchPlace]);
+    }, 0);
+  };
 
   const handleMarkerClick = (data, isJourney) => {
     if (!journeyId) {
@@ -193,23 +202,16 @@ const SingleJourney = () => {
       setAlertMessages((prev) => [...prev, "請選擇日期和時間"]);
       return;
     }
-
-    const formattedTripDate = tripDate.format("YYYY-MM-DD");
-    const formattedTripStartTime = tripStartTime.format("HH:mm");
-
-    const isDuplicate = journeyData.some((journey) => {
-      return (
-        journey.date === formattedTripDate &&
-        journey.startTime === formattedTripStartTime
-      );
-    });
-
+    const isDuplicate = checkDuplicateDate(
+      journeyData,
+      formattedTripDate,
+      formattedTripStartTime
+    );
     if (isDuplicate) {
       setAlertMessages((prev) => [
         ...prev,
         "此時間已經有行程安排，請選擇其他時間",
       ]);
-
       return;
     }
 
@@ -246,17 +248,11 @@ const SingleJourney = () => {
       setAlertMessages((prev) => [...prev, "請選擇日期和時間"]);
       return;
     }
-
-    const formattedTripDate = tripDate.format("YYYY-MM-DD");
-    const formattedTripStartTime = tripStartTime.format("HH:mm");
-
-    const isDuplicate = journeyData.some((journey) => {
-      return (
-        journey.date === formattedTripDate &&
-        journey.startTime === formattedTripStartTime
-      );
-    });
-
+    const isDuplicate = checkDuplicateDate(
+      journeyData,
+      formattedTripDate,
+      formattedTripStartTime
+    );
     if (isDuplicate) {
       setAlertMessages((prev) => [
         ...prev,
@@ -286,7 +282,6 @@ const SingleJourney = () => {
       console.log("Error", error);
     },
   });
-
   const handleDelete = async (journeyId, placeId) => {
     const journeyPlaceId = placeDetails?.place_id || placeId;
     deleteMutation.mutate({
