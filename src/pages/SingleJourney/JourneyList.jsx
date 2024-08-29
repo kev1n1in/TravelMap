@@ -81,13 +81,15 @@ const JourneyList = ({
       return acc;
     }, {});
 
-  Object.keys(groupedJourneys).forEach((date) => {
-    groupedJourneys[date].sort((a, b) => {
-      const timeA = dayjs(a.startTime, "HH:mm");
-      const timeB = dayjs(b.startTime, "HH:mm");
-      return timeA - timeB;
+  if (groupedJourneys && Object.keys(groupedJourneys).length > 0) {
+    Object.keys(groupedJourneys).forEach((date) => {
+      groupedJourneys[date].sort((a, b) => {
+        const timeA = dayjs(a.startTime, "HH:mm");
+        const timeB = dayjs(b.startTime, "HH:mm");
+        return timeA - timeB;
+      });
     });
-  });
+  }
 
   const calculateTimeDifference = (startTime1, startTime2) => {
     const time1 = dayjs(startTime1, "HH:mm");
