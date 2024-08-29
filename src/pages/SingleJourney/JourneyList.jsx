@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
 import { useMutation } from "@tanstack/react-query";
 import {
-  handleCreateJourney,
-  handleSaveJourney,
-  fetchSingleJourney,
+  createNewJourney,
+  saveJourneyInfo,
+  fetchJourneyInfo,
 } from "../../firebase/firebaseService";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -23,7 +23,8 @@ import duration from "dayjs/plugin/duration";
 import weekday from "dayjs/plugin/weekday";
 import localeData from "dayjs/plugin/localeData";
 import "dayjs/locale/zh-tw";
-import clock from "./img/clock.png";
+import clockImg from "./img/clock.png";
+import homeImg from "./img/home.png";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -32,7 +33,7 @@ dayjs.locale("zh-tw");
 
 const JourneyList = ({
   journeyId,
-  journeys,
+  // journeys,
   isLoading,
   error,
   onClickCard,
@@ -48,6 +49,7 @@ const JourneyList = ({
   const [selectedJourney, setSelectedJourney] = useState(null);
 
   const handleOpenDialog = (journey) => {
+    console.log("");
     setSelectedJourney(journey);
     setOpen(true);
   };
@@ -69,27 +71,18 @@ const JourneyList = ({
     return `${date.format("MM/DD")} ${weekdayName}`;
   };
 
-  const groupedJourneys = journeys
-    ?.slice()
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
-    .reduce((acc, journey) => {
-      const date = new Date(journey.date).toDateString();
-      if (!acc[date]) {
-        acc[date] = [];
+  const groupJourneyByDate = (data) => {
+    return data.reduce((groups, item) => {
+      const { date } = item;
+      if (!groups[date]) {
+        groups[date] = [];
       }
-      acc[date].push(journey);
-      return acc;
+      groups[date].push(item);
+      return groups;
     }, {});
+  };
 
-  if (groupedJourneys && Object.keys(groupedJourneys).length > 0) {
-    Object.keys(groupedJourneys).forEach((date) => {
-      groupedJourneys[date].sort((a, b) => {
-        const timeA = dayjs(a.startTime, "HH:mm");
-        const timeB = dayjs(b.startTime, "HH:mm");
-        return timeA - timeB;
-      });
-    });
-  }
+  const groupedData = groupJourneyByDate(sortedJourney);
 
   const calculateTimeDifference = (startTime1, startTime2) => {
     const time1 = dayjs(startTime1, "HH:mm");
@@ -108,8 +101,8 @@ const JourneyList = ({
   const createMutation = useMutation({
     mutationFn: ({ title, description }) =>
       journeyId
-        ? handleSaveJourney(journeyId, title, description)
-        : handleCreateJourney(title, description, navigate),
+        ? saveJourneyInfo(journeyId, title, description)
+        : createNewJourney(title, description, navigate),
     onSuccess: () => {
       alert(journeyId ? "行程已成功保存！" : "行程創建成功！");
       setNewJourney({ title: "", description: "" });
@@ -138,7 +131,7 @@ const JourneyList = ({
   useEffect(() => {
     if (journeyId) {
       const fetchJourneyData = async () => {
-        const data = await fetchSingleJourney(journeyId);
+        const data = await fetchJourneyInfo(journeyId);
         setNewJourney({ title: data.title, description: data.description });
       };
       fetchJourneyData();
@@ -153,118 +146,122 @@ const JourneyList = ({
   };
 
   return (
-    <ListWrapper>
-      <TypeWrapper>
-        <Title>行程總覽</Title>
-        <JourneyTitleInput
-          placeholder="行程名稱"
-          name="title"
-          value={newJourney.title}
-          onChange={handleInputChange}
-        />
-        <JourneyDescriptionInput
-          placeholder="行程描述"
-          name="description"
-          value={newJourney.description}
-          onChange={handleInputChange}
-        />
-        <ActionButton
-          onClick={handleCreateOrSaveJourneyClick}
-          disabled={createMutation.isLoading}
-        >
-          {journeyId ? "儲存行程" : "建立行程"}
-        </ActionButton>
-      </TypeWrapper>
-      <ContentWrapper>
-        {isLoading ? (
-          <Message>加載中...</Message>
-        ) : error ? (
-          <Message>Oops: {error.message}</Message>
-        ) : groupedJourneys && Object.keys(groupedJourneys).length > 0 ? (
-          Object.keys(groupedJourneys).map((date) => (
-            <JourneyDateSection key={date}>
-              <DateTitle>{formatDate(date)}</DateTitle>
-              {groupedJourneys[date].map((journey, index, arr) => {
-                const labelIndex = sortedJourney.findIndex(
-                  (sorted) => sorted.id === journey.id
-                );
+    <>
+      <TitleWrapper>
+        <Title>行程列表</Title>
+        <HomeButton onClick={handleBackHome} src={homeImg} />
+      </TitleWrapper>
+      <ListWrapper>
+        <TypeWrapper>
+          <JourneyTitleInput
+            placeholder="行程名稱"
+            name="title"
+            value={newJourney.title}
+            onChange={handleInputChange}
+          />
+          <JourneyDescriptionInput
+            placeholder="行程描述"
+            name="description"
+            value={newJourney.description}
+            onChange={handleInputChange}
+          />
+          <ActionButton
+            onClick={handleCreateOrSaveJourneyClick}
+            disabled={createMutation.isLoading}
+          >
+            {journeyId ? "儲存行程" : "建立行程"}
+          </ActionButton>
+        </TypeWrapper>
+        <ContentWrapper>
+          {isLoading ? (
+            <Message>加載中...</Message>
+          ) : error ? (
+            <Message>Oops: {error.message}</Message>
+          ) : groupedData && Object.keys(groupedData).length > 0 ? (
+            Object.keys(groupedData).map((date) => (
+              <JourneyDateSection key={date}>
+                <DateTitle>{formatDate(date)}</DateTitle>
+                {groupedData[date].map((journey, index, arr) => {
+                  const labelIndex = sortedJourney.findIndex(
+                    (sorted) => sorted.id === journey.id
+                  );
 
-                const nextJourney = arr[index + 1];
-                const timeDifference = nextJourney
-                  ? calculateTimeDifference(
-                      journey.startTime,
-                      nextJourney.startTime
-                    )
-                  : null;
+                  const nextJourney = arr[index + 1];
+                  const timeDifference = nextJourney
+                    ? calculateTimeDifference(
+                        journey.startTime,
+                        nextJourney.startTime
+                      )
+                    : null;
 
-                return (
-                  <div key={journey.id}>
-                    <JourneyCard onClick={() => onClickCard(journey)}>
-                      <JourneyImageWrapper>
-                        {labelIndex >= 0 && (
-                          <JourneyLabel>{` ${labelIndex + 1}`}</JourneyLabel>
-                        )}
-                        {journey.photos && journey.photos.length > 0 && (
-                          <JourneyImage
-                            src={journey.photos[0]}
-                            alt={journey.name || ""}
-                          />
-                        )}
-                      </JourneyImageWrapper>
-                      <JourneyContent>
-                        <JourneyTitle>{journey.name || ""}</JourneyTitle>
-                        <TimeContainer>
-                          <ClockIcon src={clock} alt="Clock Icon" />
-                          <JourneyTime>{journey.startTime || ""}</JourneyTime>
-                        </TimeContainer>
-                        <RemoveButton
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleOpenDialog(journey);
-                          }}
-                          whileHover={{ scale: 1.2 }}
-                          whileTap={{ scale: 0.8 }}
-                        >
-                          <RemoveImg
-                            src={trash}
-                            alt="刪除"
-                            initial={{ rotate: 0 }}
-                            animate={{ rotate: [0, 20, -20, 0] }}
-                            transition={{ duration: 0.5 }}
-                          />
-                        </RemoveButton>
-                      </JourneyContent>
-                    </JourneyCard>
+                  return (
+                    <div key={journey.id}>
+                      <JourneyCard onClick={() => onClickCard(journey)}>
+                        <JourneyImageWrapper>
+                          {labelIndex >= 0 && (
+                            <JourneyLabel>{` ${labelIndex + 1}`}</JourneyLabel>
+                          )}
+                          {journey.photos && journey.photos.length > 0 && (
+                            <JourneyImage
+                              src={journey.photos[0]}
+                              alt={journey.name || ""}
+                            />
+                          )}
+                        </JourneyImageWrapper>
+                        <JourneyContent>
+                          <JourneyTitle>{journey.name || ""}</JourneyTitle>
+                          <TimeContainer>
+                            <ClockIcon src={clockImg} alt="Clock Icon" />
+                            <JourneyTime>{journey.startTime || ""}</JourneyTime>
+                          </TimeContainer>
+                          <RemoveButton
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleOpenDialog(journey);
+                            }}
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.8 }}
+                          >
+                            <RemoveImg
+                              src={trash}
+                              alt="刪除"
+                              initial={{ rotate: 0 }}
+                              animate={{ rotate: [0, 20, -20, 0] }}
+                              transition={{ duration: 0.5 }}
+                            />
+                          </RemoveButton>
+                        </JourneyContent>
+                      </JourneyCard>
 
-                    {timeDifference && (
-                      <TimeDifference>{timeDifference}</TimeDifference>
-                    )}
-                  </div>
-                );
-              })}
-            </JourneyDateSection>
-          ))
-        ) : (
-          <Message>趕緊新增行程吧</Message>
-        )}
-        <ActionButton onClick={handleBackHome}>返回行程總覽</ActionButton>
-      </ContentWrapper>
+                      {timeDifference && (
+                        <TimeDifference>{timeDifference}</TimeDifference>
+                      )}
+                    </div>
+                  );
+                })}
+              </JourneyDateSection>
+            ))
+          ) : (
+            <Message>趕緊新增行程吧</Message>
+          )}
+        </ContentWrapper>
 
-      <Dialog open={open} onClose={handleCloseDialog}>
-        <DialogTitle>確認刪除</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            您確定要刪除此地標嗎？此操作無法撤銷。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleConfirmDelete} color="secondary">
-            確定刪除
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </ListWrapper>
+        <Dialog open={open} onClose={handleCloseDialog}>
+          <DialogTitle>確認刪除</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              您確定要刪除此地標嗎？此操作無法撤銷。
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>取消</Button>
+            <Button onClick={handleConfirmDelete} color="secondary">
+              確定刪除
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </ListWrapper>
+    </>
   );
 };
 
@@ -298,37 +295,51 @@ JourneyList.propTypes = {
 
 const ListWrapper = styled.div`
   width: 100%;
-  padding: 16px;
+  padding: 5px 25px 10px 25px;
   box-sizing: border-box;
+  box-shadow: -4px 0px 16px rgba(0, 0, 0, 0.1);
 `;
 
 const TypeWrapper = styled.div`
   margin-bottom: 32px;
+  position: relative;
+`;
+
+const TitleWrapper = styled.div`
+  width: 100%;
+  background-color: #57c2e9;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px 10px 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const Title = styled.h2`
-  font-size: 24px;
-  margin-bottom: 16px;
+  font-size: 26px;
+  color: white;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(214, 212, 212, 0.642);
 `;
 
 const JourneyTitleInput = styled.input`
   width: 100%;
   padding-top: 16px;
-  margin-bottom: 16px;
-  font-size: 1rem;
+  font-size: 24px;
   border: none;
   border-radius: 4px;
   outline: none;
+  font-weight: 500;
 `;
 
 const JourneyDescriptionInput = styled.textarea`
   width: 100%;
-  height: 100px;
+  height: 80px;
   padding-top: 16px;
-  margin-bottom: 16px;
-  font-size: 1rem;
+  margin-bottom: 5px;
+  font-size: 20px;
   border: none;
-  border-radius: 4px;
   resize: none;
   outline: none;
 `;
@@ -345,6 +356,9 @@ const JourneyDateSection = styled.div`
 
 const DateTitle = styled.h3`
   margin-bottom: 16px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #6c6c6c;
 `;
 
 const JourneyCard = styled.div`
@@ -361,7 +375,7 @@ const JourneyCard = styled.div`
 
 const JourneyImageWrapper = styled.div`
   width: 100%;
-  max-height: 140px;
+  max-height: 180px;
   overflow: hidden;
   border-radius: 4px;
   position: relative;
@@ -369,17 +383,16 @@ const JourneyImageWrapper = styled.div`
 
 const JourneyImage = styled.img`
   width: 100%;
-  height: 100%;
+  max-height: 180px;
   object-fit: cover;
   transition: transform 0.3s ease-in-out;
-
   &:hover {
     transform: scale(1.1);
   }
 `;
 
 const JourneyContent = styled.div`
-  padding: 16px;
+  padding: 12px 12px 20px 12px;
 `;
 
 const JourneyTitle = styled.h3`
@@ -392,7 +405,7 @@ const JourneyTitle = styled.h3`
 const JourneyTime = styled.p`
   display: flex;
   width: 56px;
-  margin-top: 24px;
+  margin-top: 13px;
   font-size: 0.875rem;
   font-weight: 700;
   border-radius: 4px;
@@ -405,7 +418,7 @@ const TimeContainer = styled.div`
 
 const ClockIcon = styled.img`
   position: relative;
-  top: 22px;
+  top: 12px;
   right: 4px;
   width: 24px;
   height: 24px;
@@ -425,15 +438,21 @@ const ActionButton = styled.button`
   border: none;
   border-radius: 4px;
   cursor: pointer;
-
+  font-weight: 500;
   &:disabled {
     background-color: #ccc;
     cursor: not-allowed;
   }
 
   &:hover {
-    background-color: #0056b3;
+    opacity: 0.8;
   }
+`;
+
+const HomeButton = styled.img`
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
 `;
 
 const Message = styled.p`
@@ -474,8 +493,8 @@ const JourneyLabel = styled.div`
 
 const RemoveButton = styled(motion.button)`
   position: absolute;
-  top: 208px;
-  right: 8px;
+  bottom: 20px;
+  right: 20px;
   background: none;
   border: none;
   padding: 0;

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-// import { addAttraction } from "../../firebase/firebaseService";
 import PropTypes from "prop-types";
 import { styled } from "styled-components";
 import closeImg from "./img/close.png";
@@ -36,6 +35,9 @@ const Modal = ({
   const [photoUrls, setPhotoUrls] = useState([]);
   const [open, setOpen] = useState(false);
 
+  // console.log("journeyId", journeyId);
+  // console.log("placeDetails", placeDetails);
+
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
       const urls = placeDetails.photos
@@ -66,7 +68,7 @@ const Modal = ({
 
   const handleConfirmDelete = () => {
     if (onDelete) {
-      onDelete(journeyId, placeDetails?.place_id);
+      onDelete(journeyId);
       setOpen(false);
     }
   };

@@ -68,7 +68,7 @@ const Map = ({
               <div
                 style={{
                   fontSize: "16px",
-                  color: "#105073",
+                  color: "#105b80",
                   whiteSpace: "nowrap",
                   fontWeight: "700",
                   textShadow:

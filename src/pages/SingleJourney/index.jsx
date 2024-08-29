@@ -1,7 +1,7 @@
 import { useJsApiLoader } from "@react-google-maps/api";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
-import { fetchJourney } from "../../firebase/firebaseService";
+import { fetchAttractions } from "../../firebase/firebaseService";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Modal from "./Modal";
 import styled from "styled-components";
@@ -20,6 +20,7 @@ import {
   addAttraction,
 } from "../../firebase/firebaseService";
 import Map from "./Map";
+import { RingLoader } from "react-spinners";
 
 const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
@@ -41,6 +42,17 @@ const SingleJourney = () => {
     libraries,
   });
 
+  const {
+    data: journeyData,
+    isLoading,
+    error,
+    isFetched,
+  } = useQuery({
+    queryKey: ["journeys", journeyId],
+    queryFn: () => fetchAttractions(journeyId),
+    onSuccess: (data) => console.log("Fetched journeys:", data),
+  });
+
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -54,18 +66,8 @@ const SingleJourney = () => {
     );
   }, []);
 
-  const {
-    data: journeyData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["journeys", journeyId],
-    queryFn: () => fetchJourney(journeyId),
-    onSuccess: (data) => console.log("Fetched journeys:", data),
-  });
-
   useEffect(() => {
-    if (!Array.isArray(journeyData)) {
+    if (!isFetched || !Array.isArray(journeyData)) {
       return;
     }
     const sorted = [...journeyData].sort((a, b) => {
@@ -74,7 +76,7 @@ const SingleJourney = () => {
       return dateA - dateB;
     });
     setSortedJourney(sorted);
-  }, [journeyData]);
+  }, [isFetched, journeyData]);
 
   useEffect(() => {
     if (!Array.isArray(sortedJourney)) {
@@ -274,19 +276,20 @@ const SingleJourney = () => {
     },
   });
 
-  const handleDelete = async (journeyId, journeyPlaceId) => {
-    const placeId = placeDetails?.place_id || journeyPlaceId;
-    if (!placeId) {
-      console.error("placeId is undefined. Cannot delete journey.");
-      return;
-    }
+  const handleDelete = async (journeyId, placeId) => {
+    const journeyPlaceId = placeDetails?.place_id || placeId;
     deleteMutation.mutate({
       journeyId,
-      placeId: placeId,
+      placeId: journeyPlaceId,
     });
   };
 
-  if (!isLoaded) return <div>Loading...</div>;
+  if (!isLoaded)
+    return (
+      <LoaderWrapper>
+        <RingLoader color="#123abc" />
+      </LoaderWrapper>
+    );
 
   return (
     <Container>
@@ -342,6 +345,13 @@ const SingleJourney = () => {
 
 export default SingleJourney;
 
+const LoaderWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+`;
+
 const Container = styled.div`
   display: flex;
   width: 100%;
@@ -376,6 +386,10 @@ const SearchButton = styled.button`
   display: flex;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   cursor: pointer;
+  transition: transform 0.3s ease-in-out;
+  &:hover {
+    transform: translateX(-50%) scale(1.1);
+  }
 `;
 
 const SearchIcon = styled.img`
