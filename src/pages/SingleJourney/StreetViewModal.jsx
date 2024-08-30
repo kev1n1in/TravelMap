@@ -11,6 +11,7 @@ import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import Rating from "@mui/material/Rating";
+import Switch from "@mui/material/Switch";
 
 const StreetViewModal = ({
   placeDetails,
@@ -69,9 +70,9 @@ const StreetViewModal = ({
       <ModalContainer>
         <StreetViewContainer ref={streetViewRef}> </StreetViewContainer>
         <InfoContainer>
-          <ChangeModalButton onClick={toggleView}>
-            {isStreetView ? "切換到圖片模式" : "切換到街景模式"}
-          </ChangeModalButton>
+          <SwitchContainer>
+            <StyledSwitch checked={isStreetView} onChange={toggleView} />
+          </SwitchContainer>
           <CloseWrapper>
             <CloseIcon src={whiteCloseImg} onClick={onClose} />
           </CloseWrapper>
@@ -183,7 +184,7 @@ const ModalOverlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 10;
 `;
 
 const ModalContainer = styled.div`
@@ -213,7 +214,7 @@ const InfoContainer = styled.div`
   margin-left: auto;
   background-color: rgba(0, 0, 0, 0.6);
   color: white;
-  padding-left: 20px;
+  padding-left: 30px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -340,18 +341,17 @@ const AttractionAddress = styled.h3`
   text-align: left;
 `;
 
-const ChangeModalButton = styled.button`
+const SwitchContainer = styled.div`
+  display: flex;
+  align-items: center;
   position: absolute;
   bottom: 10px;
-  left: -150px;
-  background-color: #57c2e9;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  font-size: 14px;
-  cursor: pointer;
-  z-index: 1010;
+  left: 0;
+  z-index: 11;
+`;
+
+const StyledSwitch = styled(Switch)`
+  margin: 0 10px;
 `;
 
 export default StreetViewModal;
