@@ -201,7 +201,7 @@ const ModalOverlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 10;
 `;
 
 const ModalContainer = styled.div`
@@ -261,6 +261,7 @@ const CloseWrapper = styled.div`
   height: 30px;
   display: flex;
   justify-content: end;
+  z-index: 30;
 `;
 
 const CloseIcon = styled.img`
@@ -308,6 +309,7 @@ const ModalButton = styled.button`
 
 const AttractionName = styled.h1`
   position: relative;
+  width: 200px;
   bottom: 20px;
   right: 10px;
   color: #2d4057;
@@ -361,5 +363,5 @@ const ChangeModalButton = styled.button`
   border-radius: 5px;
   font-size: 14px;
   cursor: pointer;
-  z-index: 1010;
+  z-index: 10;
 `;
