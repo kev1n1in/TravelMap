@@ -20,6 +20,7 @@ import ConfirmDialog from "../../components/ConfirmDialog";
 import AlertMessage from "../../components/AlertMessage";
 import travelGif from "./img/travelImg.png";
 import homeImg from "./img/home.png";
+import ActionButton from "../../components/Buttons/ActionButton";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -44,7 +45,6 @@ const JourneyList = ({
   const [alertMessage, setAlertMessage] = useState("");
 
   const handleOpenDialog = (journey) => {
-    console.log("");
     setSelectedJourney(journey);
     setOpen(true);
   };
@@ -160,12 +160,13 @@ const JourneyList = ({
             value={newJourney.description}
             onChange={handleInputChange}
           />
-          <ActionButton
-            onClick={handleCreateOrSaveJourneyClick}
-            disabled={createMutation.isLoading}
-          >
-            {journeyId ? "儲存行程" : "建立行程"}
-          </ActionButton>
+          <ActionButtonWrapper>
+            <ActionButton
+              onClick={handleCreateOrSaveJourneyClick}
+              disabled={createMutation.isLoading}
+              isCreating={!journeyId}
+            />
+          </ActionButtonWrapper>
         </TypeWrapper>
         <ContentWrapper>
           {isLoading ? (
@@ -238,7 +239,7 @@ const JourneyList = ({
           ) : (
             <>
               <TravelImg src={travelGif} />
-              <Message>趕緊新增行程吧</Message>
+              <Message>這裡空空如也～</Message>
             </>
           )}
         </ContentWrapper>
@@ -300,28 +301,32 @@ const ListWrapper = styled.div`
   width: 100%;
   padding: 5px 25px 10px 25px;
   box-sizing: border-box;
-  box-shadow: -4px 0px 16px rgba(0, 0, 0, 0.1);
 `;
 
 const TypeWrapper = styled.div`
-  margin-bottom: 32px;
+  margin-bottom: 64px;
   position: relative;
 `;
 
+const ActionButtonWrapper = styled.div`
+  position: absolute;
+  right: 0;
+  bottom: -56px;
+`;
 const TitleWrapper = styled.div`
   width: 100%;
-  background-color: #57c2e9;
+  background-color: #fff;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px 10px 20px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const Title = styled.h2`
   font-size: 26px;
-  color: white;
+  color: rgb(30, 159, 210);
   font-weight: 700;
   text-shadow: 2px 2px 4px rgba(214, 212, 212, 0.642);
 `;
@@ -339,7 +344,7 @@ const JourneyTitleInput = styled.input`
 const JourneyDescriptionInput = styled.textarea`
   width: 100%;
   height: 80px;
-  padding-top: 16px;
+  padding: 16px 48px 0 0;
   margin-bottom: 5px;
   font-size: 20px;
   border: none;
@@ -368,6 +373,7 @@ const JourneyCard = styled.div`
   position: relative;
   border: none;
   border-radius: 4px;
+
   margin-bottom: 16px;
   box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -426,6 +432,7 @@ const ClockIcon = styled.img`
   width: 24px;
   height: 24px;
 `;
+
 const TimeDifference = styled.p`
   padding: 8px 0 8px 16px;
   color: #555;
@@ -433,26 +440,9 @@ const TimeDifference = styled.p`
   border-left: 1px dashed #000;
 `;
 
-const ActionButton = styled.button`
-  padding: 10px 16px;
-  font-size: 1rem;
-  color: white;
-  background-color: #57c2e9;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-
-  &:hover {
-    opacity: 0.8;
-  }
-`;
-
 const HomeButton = styled.img`
+  position: absolute;
+  right: 32px;
   width: 36px;
   height: 36px;
   cursor: pointer;
@@ -460,11 +450,13 @@ const HomeButton = styled.img`
 
 const TravelImg = styled.img`
   height: 280px;
+  margin-top: 48px;
   width: auto;
 `;
 
 const Message = styled.p`
-  font-size: 1rem;
+  text-align: center;
+  font-size: 2rem;
   color: #333;
 `;
 

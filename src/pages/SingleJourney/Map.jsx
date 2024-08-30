@@ -21,7 +21,7 @@ const Map = ({
     <GoogleMap
       mapContainerStyle={mapContainerStyle}
       center={center}
-      zoom={13}
+      zoom={12}
       options={{ styles: mapStyles }}
       onLoad={onMapLoad}
       onUnmount={onUnmount}

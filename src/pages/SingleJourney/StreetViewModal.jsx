@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { styled } from "styled-components";
-import closeImg from "./img/close.png";
-import locationImg from "./img/location.png";
+import whiteCloseImg from "./img/close-white.png";
+import whiteLocationImg from "./img/location-white.png";
 import Grid from "@mui/material/Grid";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -13,7 +13,7 @@ import ConfirmDialog from "../../components/ConfirmDialog";
 import Rating from "@mui/material/Rating";
 import Switch from "@mui/material/Switch";
 
-const Modal = ({
+const StreetViewModal = ({
   placeDetails,
   onClose,
   modalType,
@@ -28,29 +28,25 @@ const Modal = ({
   toggleView,
   isStreetView,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [photoUrls, setPhotoUrls] = useState([]);
+  const streetViewRef = useRef(null);
   const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
-    if (placeDetails && placeDetails.photos) {
-      const urls = placeDetails.photos
-        .map((photo) => (photo.getUrl ? photo.getUrl() : null))
-        .filter((url) => url !== null);
-      setPhotoUrls(urls);
+    if (
+      placeDetails &&
+      placeDetails.geometry &&
+      placeDetails.geometry.location
+    ) {
+      new window.google.maps.StreetViewPanorama(streetViewRef.current, {
+        position: {
+          lat: placeDetails.geometry.location.lat(),
+          lng: placeDetails.geometry.location.lng(),
+        },
+        pov: { heading: 165, pitch: 0 },
+        zoom: 1,
+      });
     }
   }, [placeDetails]);
-
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % photoUrls.length);
-  };
-
-  const prevSlide = () => {
-    if (photoUrls.length === 0) return;
-    setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + photoUrls.length) % photoUrls.length
-    );
-  };
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -72,24 +68,13 @@ const Modal = ({
   return (
     <ModalOverlay>
       <ModalContainer>
-        <PhotosContainer>
-          {placeDetails.photos && placeDetails.photos.length > 0 && (
-            <>
-              <SlideButton onClick={prevSlide}>◀</SlideButton>
-              <SlideImage
-                src={photoUrls[currentIndex]}
-                alt={`Photo ${currentIndex + 1}`}
-              />
-              <SlideButton onClick={nextSlide}>▶</SlideButton>
-            </>
-          )}
-        </PhotosContainer>
+        <StreetViewContainer ref={streetViewRef}> </StreetViewContainer>
         <InfoContainer>
           <SwitchContainer>
             <StyledSwitch checked={isStreetView} onChange={toggleView} />
           </SwitchContainer>
           <CloseWrapper>
-            <CloseIcon src={closeImg} onClick={onClose} />
+            <CloseIcon src={whiteCloseImg} onClick={onClose} />
           </CloseWrapper>
           <AttractionName>{placeDetails.name}</AttractionName>
           <RatingWrapper>
@@ -104,7 +89,7 @@ const Modal = ({
             </RatingText>
           </RatingWrapper>
           <AddressWrapper>
-            <AddressIcon src={locationImg} />
+            <AddressIcon src={whiteLocationImg} />
             <AttractionAddress>
               {placeDetails.formatted_address}
             </AttractionAddress>
@@ -162,20 +147,19 @@ const Modal = ({
   );
 };
 
-Modal.propTypes = {
+StreetViewModal.propTypes = {
   journeyId: PropTypes.string.isRequired,
   modalType: PropTypes.string.isRequired,
   placeDetails: PropTypes.shape({
     name: PropTypes.string.isRequired,
     formatted_address: PropTypes.string.isRequired,
     rating: PropTypes.number,
-    photos: PropTypes.arrayOf(
-      PropTypes.shape({
-        height: PropTypes.number,
-        html_attributions: PropTypes.arrayOf(PropTypes.string),
-        width: PropTypes.number,
-      })
-    ),
+    geometry: PropTypes.shape({
+      location: PropTypes.shape({
+        lat: PropTypes.func.isRequired,
+        lng: PropTypes.func.isRequired,
+      }).isRequired,
+    }).isRequired,
     place_id: PropTypes.string,
   }),
   onClose: PropTypes.func.isRequired,
@@ -189,8 +173,6 @@ Modal.propTypes = {
   toggleView: PropTypes.func.isRequired,
   isStreetView: PropTypes.bool.isRequired,
 };
-
-export default Modal;
 
 const ModalOverlay = styled.div`
   position: absolute;
@@ -206,9 +188,10 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  display: flex;
   position: relative;
+  display: flex;
   background-color: white;
+  padding: 0;
   border-radius: 8px;
   max-width: 1032px;
   width: 90%;
@@ -216,55 +199,35 @@ const ModalContainer = styled.div`
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 `;
 
-const PhotosContainer = styled.div`
-  width: 664px;
-  position: relative;
-  overflow: hidden;
-`;
-
-const SlideImage = styled.img`
+const StreetViewContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-`;
-
-const SlideButton = styled.button`
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
   z-index: 1;
-  border-radius: 50px;
-
-  &:first-of-type {
-    left: 10px;
-  }
-  &:last-of-type {
-    right: 10px;
-  }
 `;
 
 const InfoContainer = styled.div`
   position: relative;
-  right: 10px;
   width: 368px;
-  margin-left: 20px;
-  padding-left: 20px;
+  margin-left: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding-left: 30px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 `;
 
 const CloseWrapper = styled.div`
-  width: 100%;
-  padding: 20px 20px 0 0;
-  height: 30px;
+  position: absolute;
+  top: 20px;
+  right: 40px;
   display: flex;
-  justify-content: end;
-  z-index: 30;
+  justify-content: flex-end;
 `;
-
 const CloseIcon = styled.img`
   width: 24px;
   height: 24px;
@@ -273,28 +236,57 @@ const CloseIcon = styled.img`
 
 const StyledDateCalendar = styled(DateCalendar)`
   position: relative;
-  right: 30px;
-  bottom: 10px;
-  width: 300px;
-  height: 400px;
-  margin: 0;
-  padding: 0;
+  right: 15px;
+  width: 100%;
+  height: 280px !important;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  .MuiTypography-root {
+    color: #fff;
+  }
+
+  .MuiPickersCalendarHeader-label,
+  .MuiPickersCalendarHeader-switchViewButton,
+  .MuiIconButton-root {
+    color: #fff;
+  }
+
+  .MuiPickersDay-root {
+    color: #fff;
+  }
+
+  .Mui-selected {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+  }
 `;
 
 const StyledTimePicker = styled(TimePicker)`
   position: relative;
-  right: 55px;
-  bottom: 50px;
-  margin: 0;
-  padding: 0;
+  top: 10px;
+  right: 60px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 8px;
+  margin-top: 16px;
+
+  .MuiTypography-root {
+    color: #fff;
+  }
+
+  .MuiOutlinedInput-root {
+    color: #fff;
+  }
+
+  .MuiInputAdornment-root {
+    color: #fff;
+  }
 `;
 
 const ButtonWrapper = styled.div`
-  position: absolute;
-  right: -10px;
+  position: relative;
   bottom: 0;
   display: flex;
-  justify-content: end;
+  justify-content: flex-end;
 `;
 
 const ModalButton = styled.button`
@@ -311,32 +303,27 @@ const ModalButton = styled.button`
 const AttractionName = styled.h1`
   position: relative;
   width: 250px;
-  bottom: 20px;
-  right: 10px;
-  color: #2d4057;
+  top: 10px;
+  color: white;
   font-size: 24px;
   font-weight: 700;
 `;
 
 const RatingWrapper = styled.div`
-  position: relative;
-  right: 10px;
-  bottom: 20px;
-  margin-bottom: 10px;
+  margin-top: 10px;
 `;
 
 const RatingText = styled.p`
-  color: #2d4057;
+  color: white;
   font-size: 16px;
   font-weight: 400;
 `;
 
 const AddressWrapper = styled.div`
+  padding-top: 10px;
   display: flex;
-  position: relative;
-  bottom: 20px;
-  right: 10px;
   align-items: center;
+  justify-content: flex-start;
   width: 100%;
   height: 56px;
 `;
@@ -347,10 +334,11 @@ const AddressIcon = styled.img`
 `;
 
 const AttractionAddress = styled.h3`
-  color: #2d4057;
+  color: white;
   font-size: 16px;
   font-weight: 400;
   padding-left: 10px;
+  text-align: left;
 `;
 
 const SwitchContainer = styled.div`
@@ -359,8 +347,11 @@ const SwitchContainer = styled.div`
   position: absolute;
   bottom: 10px;
   left: 0;
+  z-index: 11;
 `;
 
 const StyledSwitch = styled(Switch)`
   margin: 0 10px;
 `;
+
+export default StreetViewModal;
