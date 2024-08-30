@@ -168,7 +168,7 @@ const Home = () => {
           variant="contained"
           color="primary"
           onClick={() => navigate("/journey")}
-          style={{ background: "#57c2e9" }}
+          style={{ background: "rgb(30, 159, 210)" }}
         >
           新增行程
         </Button>

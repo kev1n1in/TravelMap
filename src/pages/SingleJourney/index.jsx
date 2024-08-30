@@ -4,6 +4,7 @@ import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { fetchAttractions } from "../../firebase/firebaseService";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Modal from "./Modal";
+import StreetViewModal from "./StreetViewModal";
 import styled from "styled-components";
 import SearchImg from "../SingleJourney/img/search.png";
 import JourneyList from "./JourneyList";
@@ -22,6 +23,7 @@ import {
 import Map from "./Map";
 import { RingLoader } from "react-spinners";
 import AlertMessage from "../../components/AlertMessage";
+
 const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
 
@@ -36,10 +38,12 @@ const SingleJourney = () => {
   const [polylinePath, setPolylinePath] = useState([]);
   const [sortedJourney, setSortedJourney] = useState([]);
   const [alertMessages, setAlertMessages] = useState([]);
+  const [isStreetView, setIsStreetView] = useState(false);
   const { id: journeyId } = useParams();
   const queryClient = useQueryClient();
   const formattedTripDate = tripDate.format("YYYY-MM-DD");
   const formattedTripStartTime = tripStartTime.format("HH:mm");
+
   const checkDuplicateDate = (
     journeyData,
     formattedTripDate,
@@ -52,6 +56,7 @@ const SingleJourney = () => {
       );
     });
   };
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: API_KEY,
     libraries,
@@ -282,12 +287,17 @@ const SingleJourney = () => {
       console.log("Error", error);
     },
   });
+
   const handleDelete = async (journeyId, placeId) => {
     const journeyPlaceId = placeDetails?.place_id || placeId;
     deleteMutation.mutate({
       journeyId,
       placeId: journeyPlaceId,
     });
+  };
+
+  const toggleView = () => {
+    setIsStreetView(!isStreetView);
   };
 
   if (!isLoaded)
@@ -315,21 +325,41 @@ const SingleJourney = () => {
           搜尋此區域景點
         </SearchButton>
         {state.isModalOpen && (
-          <Modal
-            journeyId={journeyId}
-            placeDetails={placeDetails}
-            modalType={state.modalType}
-            onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
-            onDelete={handleDelete}
-            onUpdate={handleUpdate}
-            onCreate={() => handleCreate()}
-            onChangeDate={handleDateChange}
-            onChangeTime={handleTimeChange}
-            tripDate={tripDate}
-            tripStartTime={tripStartTime}
-            isLoading={isLoading}
-            error={error}
-          />
+          <>
+            {isStreetView ? (
+              <StreetViewModal
+                journeyId={journeyId}
+                placeDetails={placeDetails}
+                modalType={state.modalType}
+                onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                onCreate={handleCreate}
+                onChangeDate={handleDateChange}
+                onChangeTime={handleTimeChange}
+                tripDate={tripDate}
+                tripStartTime={tripStartTime}
+                toggleView={toggleView}
+                isStreetView={isStreetView}
+              />
+            ) : (
+              <Modal
+                journeyId={journeyId}
+                placeDetails={placeDetails}
+                modalType={state.modalType}
+                onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                onCreate={handleCreate}
+                onChangeDate={handleDateChange}
+                onChangeTime={handleTimeChange}
+                tripDate={tripDate}
+                tripStartTime={tripStartTime}
+                toggleView={toggleView}
+                isStreetView={isStreetView}
+              />
+            )}
+          </>
         )}
       </MapContainer>
       <CardsContainer>
