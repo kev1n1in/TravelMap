@@ -129,6 +129,7 @@ const VideoBackground = styled.video`
 `;
 
 const Title = styled.h2`
+  font-family: "Seaweed Script", cursive;
   position: absolute;
   top: 0;
   left: 0;
@@ -137,7 +138,7 @@ const Title = styled.h2`
   font-size: calc(10vw + 10vh);
   text-align: center;
   line-height: 80vh;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   background-color: rgba(211, 211, 211, 0.6);
   mix-blend-mode: normal;
   color: #333;
@@ -232,9 +233,9 @@ const HomeButton = styled.button`
   background-color: #57c2e9;
   color: white;
   font-size: 16px;
-  border-radius: 5px;
   cursor: pointer;
-
+  border-radius: 10px;
+  font-weight: 600;
   @media (max-width: 768px) {
     font-size: 14px;
     padding: 8px 16px;
@@ -245,10 +246,11 @@ const LogoutButton = styled.button`
   margin: 10px;
   padding: 10px 20px;
   border: none;
-  background-color: #d02c2c;
+  background-color: #919191;
   color: white;
   font-size: 16px;
-  border-radius: 5px;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
 
   @media (max-width: 768px) {
