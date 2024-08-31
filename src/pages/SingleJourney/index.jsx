@@ -39,10 +39,27 @@ const SingleJourney = () => {
   const [sortedJourney, setSortedJourney] = useState([]);
   const [alertMessages, setAlertMessages] = useState([]);
   const [isStreetView, setIsStreetView] = useState(false);
+  const [isCardsVisible, setIsCardsVisible] = useState(window.innerWidth > 768); // 控制行程列表的可見性，768px以上預設為可見
   const { id: journeyId } = useParams();
   const queryClient = useQueryClient();
   const formattedTripDate = tripDate.format("YYYY-MM-DD");
   const formattedTripStartTime = tripStartTime.format("HH:mm");
+
+  useEffect(() => {
+    // 監聽視窗大小改變事件
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsCardsVisible(true); // 當寬度大於768px時，顯示行程列表
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // 在組件卸載時移除事件監聽器
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const checkDuplicateDate = (
     journeyData,
@@ -300,6 +317,11 @@ const SingleJourney = () => {
     setIsStreetView(!isStreetView);
   };
 
+  const toggleCardsVisibility = () => {
+    if (window.innerWidth > 768) return; // 當寬度大於768px時，不允許關閉行程列表
+    setIsCardsVisible(!isCardsVisible);
+  };
+
   if (!isLoaded)
     return (
       <LoaderWrapper>
@@ -362,19 +384,24 @@ const SingleJourney = () => {
           </>
         )}
       </MapContainer>
-      <CardsContainer>
-        <JourneyList
-          journeys={journeyData}
-          journeyId={journeyId}
-          isLoading={isLoading}
-          error={error}
-          onUpdate={handleUpdate}
-          onClickCard={handleCardClick}
-          onDelete={handleDelete}
-          sortedJourney={sortedJourney}
-          placeId={placeDetails?.place_id}
-        />
-      </CardsContainer>
+      {isCardsVisible && (
+        <CardsContainer>
+          <JourneyList
+            journeys={journeyData}
+            journeyId={journeyId}
+            isLoading={isLoading}
+            error={error}
+            onUpdate={handleUpdate}
+            onClickCard={handleCardClick}
+            onDelete={handleDelete}
+            sortedJourney={sortedJourney}
+            placeId={placeDetails?.place_id}
+          />
+        </CardsContainer>
+      )}
+      <ToggleButton onClick={toggleCardsVisibility}>
+        {isCardsVisible ? "隱藏行程列表" : "顯示行程列表"}
+      </ToggleButton>
       {alertMessages?.map((message, index) => (
         <AlertMessage key={index} message={message} severity="success" />
       ))}
@@ -394,23 +421,58 @@ const LoaderWrapper = styled.div`
 const Container = styled.div`
   display: flex;
   width: 100%;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const MapContainer = styled.div`
   position: relative;
   width: 75%;
   height: 100vh;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    z-index: 1;
+  }
 `;
 
 const CardsContainer = styled.div`
   position: relative;
   width: 25%;
   height: 100vh;
+  background-color: white;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    z-index: 2;
+  }
+`;
+
+const ToggleButton = styled.button`
+  position: absolute;
+  top: 70px;
+  right: 10px;
+  padding: 10px 20px;
+  background-color: #2d4057;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 3;
+
+  @media (min-width: 769px) {
+    display: none; /* 在寬度大於768px時隱藏按鈕 */
+  }
 `;
 
 const SearchButton = styled.button`
   color: #2d4057;
-  width: 180px;
+  width: 190px;
   height: 44px;
   background-color: white;
   border: none;
@@ -434,4 +496,5 @@ const SearchButton = styled.button`
 const SearchIcon = styled.img`
   width: 24px;
   height: 24px;
+  margin-right: 8px;
 `;
