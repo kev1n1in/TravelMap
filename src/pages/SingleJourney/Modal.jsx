@@ -310,7 +310,7 @@ const ModalButton = styled.button`
 
 const AttractionName = styled.h1`
   position: relative;
-  width: 200px;
+  width: 250px;
   bottom: 20px;
   right: 10px;
   color: #2d4057;
