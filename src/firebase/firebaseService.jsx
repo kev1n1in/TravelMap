@@ -42,6 +42,7 @@ export const createNewJourney = async (title, description, navigate) => {
       title: title,
       description: description,
       createdAt: new Date().toISOString(),
+      updatedAt: serverTimestamp(),
     });
     navigate(`/journey/${newDocRef.id}`);
   } catch (error) {
@@ -158,8 +159,12 @@ export const fetchAttractions = async (journeyId) => {
 
 export const deleteJourney = async (journeyId) => {
   try {
-    const journeyDocRef = doc(db, "journeys", journeyId);
-    await deleteDoc(journeyDocRef);
+    const journeyRef = doc(db, "journeys", journeyId);
+    await updateDoc(journeyRef, {
+      updatedAt: serverTimestamp(),
+    });
+
+    await deleteDoc(journeyRef);
   } catch (error) {
     console.error("Error deleting journey document:", error);
     throw new Error("Failed to delete journey");
@@ -191,6 +196,13 @@ export const addAttraction = async (
       lat: placeDetail.geometry.location.lat(),
       lng: placeDetail.geometry.location.lng(),
     });
+
+    // 更新 `updatedAt` 字段
+    const journeyRef = doc(db, "journeys", journeyId);
+    await updateDoc(journeyRef, {
+      updatedAt: serverTimestamp(),
+    });
+
     return true;
   } catch (error) {
     console.error("Error adding place to Firestore:", error);
@@ -232,6 +244,13 @@ export const deleteAttraction = async (journeyId, placeId) => {
     for (const docSnapshot of querySnapshot.docs) {
       const docRef = doc(db, "journeys", journeyId, "journey", docSnapshot.id);
       await deleteDoc(docRef);
+
+      // 更新 `updatedAt` 字段
+      const journeyRef = doc(db, "journeys", journeyId);
+      await updateDoc(journeyRef, {
+        updatedAt: serverTimestamp(),
+      });
+
       return true;
     }
   } catch (error) {
@@ -261,10 +280,17 @@ export const updateAttraction = async (
         date: dayjs(newDate).format("YYYY-MM-DD"),
         startTime: dayjs(newStartTime).format("HH:mm"),
       });
+
+      // 更新 `updatedAt` 字段
+      const journeyRef = doc(db, "journeys", journeyId);
+      await updateDoc(journeyRef, {
+        updatedAt: serverTimestamp(),
+      });
+
       return true;
     }
   } catch (error) {
-    console.error("Error deleting documents:", error.message);
+    console.error("Error updating attraction document:", error.message);
     return false;
   }
 };

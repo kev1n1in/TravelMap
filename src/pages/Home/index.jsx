@@ -9,11 +9,18 @@ import { useNavigate } from "react-router-dom";
 import { Card, Button, Input } from "@mui/material";
 import { RingLoader } from "react-spinners";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../../firebase/firebaseConfig";
+import { auth, db } from "../../firebase/firebaseConfig";
 import {
   fetchUserJourneys,
   deleteJourney,
 } from "../../firebase/firebaseService";
+import {
+  collection,
+  onSnapshot,
+  updateDoc,
+  doc as firestoreDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import defaultImg from "./default-img.jpg";
 import trash from "./trash-bin-white.png";
 import { motion } from "framer-motion";
@@ -52,37 +59,86 @@ const Home = () => {
     if (status === "success" && data) {
       const allDocs = data.pages.flatMap((page) => page.journeys);
 
-      const filtered = allDocs.filter((doc) => {
+      const filtered = allDocs.filter((journeyDoc) => {
         return (
-          doc.title.toLowerCase().includes(search.toLowerCase()) ||
-          doc.description.toLowerCase().includes(search.toLowerCase())
+          journeyDoc.title.toLowerCase().includes(search.toLowerCase()) ||
+          journeyDoc.description.toLowerCase().includes(search.toLowerCase())
         );
       });
 
       const journeyTimesData = {};
-      filtered.forEach((doc) => {
-        if (doc.journey && doc.journey.length > 0) {
-          const sortedJourneys = doc.journey.sort((a, b) => {
+      const unsubscribeList = [];
+
+      filtered.forEach((journeyDoc) => {
+        if (journeyDoc.journey && journeyDoc.journey.length > 0) {
+          const sortedJourneys = journeyDoc.journey.sort((a, b) => {
             return (
               new Date(`${a.date} ${a.startTime}`) -
               new Date(`${b.date} ${b.startTime}`)
             );
           });
-          journeyTimesData[doc.id] = {
+          journeyTimesData[journeyDoc.id] = {
             start: sortedJourneys[0].date,
             end: sortedJourneys[sortedJourneys.length - 1].date,
           };
+
+          const journeySubcollectionRef = collection(
+            db,
+            "journeys",
+            journeyDoc.id,
+            "journey"
+          );
+          const unsubscribe = onSnapshot(journeySubcollectionRef, () => {
+            const journeyDocRef = firestoreDoc(db, "journeys", journeyDoc.id);
+            updateDoc(journeyDocRef, {
+              updatedAt: serverTimestamp(),
+            }).catch((error) => {
+              console.error("Error updating document: ", error);
+            });
+          });
+
+          unsubscribeList.push(unsubscribe);
         }
       });
 
       const sortedFiltered = filtered.sort((a, b) => {
-        const aStart = journeyTimesData[a.id]?.start;
-        const bStart = journeyTimesData[b.id]?.start;
-        return new Date(bStart) - new Date(aStart);
+        const aStart = journeyTimesData[a.id]?.start
+          ? new Date(journeyTimesData[a.id].start)
+          : null;
+        const bStart = journeyTimesData[b.id]?.start
+          ? new Date(journeyTimesData[b.id].start)
+          : null;
+
+        if (aStart && bStart) {
+          // 如果都有行程时间，按时间排序（最近的在前）
+          return bStart - aStart;
+        }
+
+        if (!aStart && !bStart) {
+          // 如果都没有行程时间，用 updatedAt 排序
+          const aUpdated = a.updatedAt
+            ? new Date(a.updatedAt.seconds * 1000)
+            : new Date(0);
+          const bUpdated = b.updatedAt
+            ? new Date(b.updatedAt.seconds * 1000)
+            : new Date(0);
+          return bUpdated - aUpdated;
+        }
+
+        // 如果一个有行程时间，另一个没有，有行程的排在前
+        if (aStart && !bStart) return -1;
+        if (!aStart && bStart) return 1;
+
+        return 0;
       });
 
       setFilteredSearch(sortedFiltered);
       setJourneyTimes(journeyTimesData);
+
+      // 清理所有监听器
+      return () => {
+        unsubscribeList.forEach((unsubscribe) => unsubscribe());
+      };
     }
   }, [data, search, status]);
 
@@ -175,20 +231,20 @@ const Home = () => {
       </Form>
 
       <GridContainer>
-        {filteredSearch.map((doc) => {
+        {filteredSearch.map((journeyDoc) => {
           return (
             <Card
-              key={doc.id}
+              key={journeyDoc.id}
               style={{ marginBottom: "10px", cursor: "pointer" }}
-              onClick={() => handleCardClick(doc.id)}
+              onClick={() => handleCardClick(journeyDoc.id)}
             >
               <CardContent
                 backgroundImage={
-                  doc.journey &&
-                  doc.journey.length > 0 &&
-                  doc.journey[0].photos &&
-                  doc.journey[0].photos.length > 0
-                    ? doc.journey[0].photos[0]
+                  journeyDoc.journey &&
+                  journeyDoc.journey.length > 0 &&
+                  journeyDoc.journey[0].photos &&
+                  journeyDoc.journey[0].photos.length > 0
+                    ? journeyDoc.journey[0].photos[0]
                     : defaultImg
                 }
               >
@@ -202,27 +258,29 @@ const Home = () => {
                         alignItems: "center",
                       }}
                     >
-                      <JourneyTitle>{doc.title || "無標題"}</JourneyTitle>
+                      <JourneyTitle>
+                        {journeyDoc.title || "無標題"}
+                      </JourneyTitle>
                     </div>
                     <JourneyTime>
-                      {journeyTimes[doc.id] &&
-                      journeyTimes[doc.id].start &&
-                      journeyTimes[doc.id].end
-                        ? `${journeyTimes[doc.id].start} ~ ${
-                            journeyTimes[doc.id].end
+                      {journeyTimes[journeyDoc.id] &&
+                      journeyTimes[journeyDoc.id].start &&
+                      journeyTimes[journeyDoc.id].end
+                        ? `${journeyTimes[journeyDoc.id].start} ~ ${
+                            journeyTimes[journeyDoc.id].end
                           }`
                         : "尚未新增行程"}
                     </JourneyTime>
                     <DescriptionContainer>
                       <JourneyDescription variant="body2" color="textSecondary">
-                        {doc.description || "無描述"}
+                        {journeyDoc.description || "無描述"}
                       </JourneyDescription>
                     </DescriptionContainer>
                   </JourneyDetailContainer>
                   <RemoveButton
                     onClick={(event) => {
                       event.stopPropagation();
-                      handleOpenDialog(doc.id, doc.title);
+                      handleOpenDialog(journeyDoc.id, journeyDoc.title);
                     }}
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}
