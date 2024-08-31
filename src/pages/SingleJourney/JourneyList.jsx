@@ -41,13 +41,13 @@ const JourneyList = ({
     description: "",
   });
   const [open, setOpen] = useState(false);
-  const [dialogType, setDialogType] = useState(""); // 新增的状态，用于区分删除操作的类型
+  const [dialogType, setDialogType] = useState("");
   const [selectedJourney, setSelectedJourney] = useState(null);
   const [alertMessage, setAlertMessage] = useState("");
 
   const handleOpenDialog = (journey, type) => {
     setSelectedJourney(journey);
-    setDialogType(type); // 设置删除操作类型
+    setDialogType(type);
     setOpen(true);
   };
 
@@ -322,6 +322,7 @@ JourneyList.propTypes = {
 
 const ListWrapper = styled.div`
   width: 100%;
+  min-width: 280px;
   padding: 5px 25px 10px 25px;
   box-sizing: border-box;
 
@@ -341,6 +342,9 @@ const ActionButtonWrapper = styled.div`
   position: absolute;
   right: 0;
   bottom: -56px;
+  @media (max-width: 1280px) {
+    right: 10px;
+  }
 `;
 
 const TitleWrapper = styled.div`
@@ -388,6 +392,9 @@ const DeleteJourneyButton = styled(ButtonBase)`
   &:hover {
     background-color: #c0392b;
   }
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const StyledButton = styled(ButtonBase)``;
@@ -401,6 +408,7 @@ const Title = styled.h2`
 
 const JourneyTitleInput = styled.input`
   width: 100%;
+
   margin-top: 16px;
   font-size: 24px;
   border: none;

@@ -197,7 +197,6 @@ export const addAttraction = async (
       lng: placeDetail.geometry.location.lng(),
     });
 
-    // 更新 `updatedAt` 字段
     const journeyRef = doc(db, "journeys", journeyId);
     await updateDoc(journeyRef, {
       updatedAt: serverTimestamp(),
@@ -245,7 +244,6 @@ export const deleteAttraction = async (journeyId, placeId) => {
       const docRef = doc(db, "journeys", journeyId, "journey", docSnapshot.id);
       await deleteDoc(docRef);
 
-      // 更新 `updatedAt` 字段
       const journeyRef = doc(db, "journeys", journeyId);
       await updateDoc(journeyRef, {
         updatedAt: serverTimestamp(),
@@ -280,8 +278,6 @@ export const updateAttraction = async (
         date: dayjs(newDate).format("YYYY-MM-DD"),
         startTime: dayjs(newStartTime).format("HH:mm"),
       });
-
-      // 更新 `updatedAt` 字段
       const journeyRef = doc(db, "journeys", journeyId);
       await updateDoc(journeyRef, {
         updatedAt: serverTimestamp(),

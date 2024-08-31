@@ -39,23 +39,21 @@ const SingleJourney = () => {
   const [sortedJourney, setSortedJourney] = useState([]);
   const [alertMessages, setAlertMessages] = useState([]);
   const [isStreetView, setIsStreetView] = useState(false);
-  const [isCardsVisible, setIsCardsVisible] = useState(window.innerWidth > 768); // 控制行程列表的可見性，768px以上預設為可見
+  const [isCardsVisible, setIsCardsVisible] = useState(window.innerWidth > 768);
   const { id: journeyId } = useParams();
   const queryClient = useQueryClient();
   const formattedTripDate = tripDate.format("YYYY-MM-DD");
   const formattedTripStartTime = tripStartTime.format("HH:mm");
 
   useEffect(() => {
-    // 監聽視窗大小改變事件
     const handleResize = () => {
       if (window.innerWidth > 768) {
-        setIsCardsVisible(true); // 當寬度大於768px時，顯示行程列表
+        setIsCardsVisible(true);
       }
     };
 
     window.addEventListener("resize", handleResize);
 
-    // 在組件卸載時移除事件監聽器
     return () => {
       window.removeEventListener("resize", handleResize);
     };
@@ -318,7 +316,7 @@ const SingleJourney = () => {
   };
 
   const toggleCardsVisibility = () => {
-    if (window.innerWidth > 768) return; // 當寬度大於768px時，不允許關閉行程列表
+    if (window.innerWidth > 768) return;
     setIsCardsVisible(!isCardsVisible);
   };
 
@@ -441,6 +439,7 @@ const MapContainer = styled.div`
 const CardsContainer = styled.div`
   position: relative;
   width: 25%;
+  min-width: 270px;
   height: 100vh;
   background-color: white;
   overflow-y: auto;
@@ -455,8 +454,8 @@ const CardsContainer = styled.div`
 
 const ToggleButton = styled.button`
   position: absolute;
-  top: 70px;
-  right: 10px;
+  top: 10px;
+  right: 60px;
   padding: 10px 20px;
   background-color: #2d4057;
   color: white;
