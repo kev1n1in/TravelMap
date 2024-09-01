@@ -3,7 +3,7 @@ import { useCallback, useEffect, useReducer, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { fetchAttractions } from "../../firebase/firebaseService";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import Modal from "./Modal";
+import Modal from "../../components/Modal";
 import StreetViewModal from "./StreetViewModal";
 import styled from "styled-components";
 import SearchImg from "../SingleJourney/img/search.png";
@@ -149,9 +149,6 @@ const SingleJourney = () => {
     if (!journeyId) {
       setAlertMessages((prev) => [...prev, "請先填寫行程名稱和描述"]);
       return;
-    }
-    if (map) {
-      map.setCenter({ lat: data.lat, lng: data.lng });
     }
     const modalType = isJourney ? "update" : "create";
     dispatch({
@@ -324,44 +321,44 @@ const SingleJourney = () => {
           <SearchIcon src={SearchImg} />
           搜尋此區域景點
         </SearchButton>
-        {state.isModalOpen && (
-          <>
-            {isStreetView ? (
-              <StreetViewModal
-                journeyId={journeyId}
-                placeDetails={placeDetails}
-                modalType={state.modalType}
-                onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                onCreate={handleCreate}
-                onChangeDate={handleDateChange}
-                onChangeTime={handleTimeChange}
-                tripDate={tripDate}
-                tripStartTime={tripStartTime}
-                toggleView={toggleView}
-                isStreetView={isStreetView}
-              />
-            ) : (
-              <Modal
-                journeyId={journeyId}
-                placeDetails={placeDetails}
-                modalType={state.modalType}
-                onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                onCreate={handleCreate}
-                onChangeDate={handleDateChange}
-                onChangeTime={handleTimeChange}
-                tripDate={tripDate}
-                tripStartTime={tripStartTime}
-                toggleView={toggleView}
-                isStreetView={isStreetView}
-              />
-            )}
-          </>
-        )}
       </MapContainer>
+      {state.isModalOpen && (
+        <>
+          {isStreetView ? (
+            <StreetViewModal
+              journeyId={journeyId}
+              placeDetails={placeDetails}
+              modalType={state.modalType}
+              onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
+              onDelete={handleDelete}
+              onUpdate={handleUpdate}
+              onCreate={handleCreate}
+              onChangeDate={handleDateChange}
+              onChangeTime={handleTimeChange}
+              tripDate={tripDate}
+              tripStartTime={tripStartTime}
+              toggleView={toggleView}
+              isStreetView={isStreetView}
+            />
+          ) : (
+            <Modal
+              journeyId={journeyId}
+              placeDetails={placeDetails}
+              modalType={state.modalType}
+              onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
+              onDelete={handleDelete}
+              onUpdate={handleUpdate}
+              onCreate={handleCreate}
+              onChangeDate={handleDateChange}
+              onChangeTime={handleTimeChange}
+              tripDate={tripDate}
+              tripStartTime={tripStartTime}
+              toggleView={toggleView}
+              isStreetView={isStreetView}
+            />
+          )}
+        </>
+      )}
       <CardsContainer>
         <JourneyList
           journeys={journeyData}

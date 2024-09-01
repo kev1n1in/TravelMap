@@ -59,7 +59,7 @@ const Map = ({
             />
             <OverlayView
               position={{ lat: lat, lng: lng }}
-              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+              mapPaneName={OverlayView.OVERLAY_LAYER}
               getPixelPositionOffset={(offsetWidth, offsetHeight) => ({
                 x: -(offsetWidth / 2) - 30,
                 y: -(offsetHeight + 60),
@@ -74,6 +74,7 @@ const Map = ({
                   textShadow:
                     "1px 1px 3px white, -1px -1px 3px white, -1px 1px 3px white, 1px -1px 3px white, 2px 2px 5px rgba(0, 0, 0, 0.5)",
                 }}
+                onClick={() => onClickMarker(place, isInJourneys)}
               >
                 {place.name}
               </div>
@@ -93,6 +94,7 @@ const Map = ({
             fontWeight: "bold",
             labelOrigin: new window.google.maps.Point(20, -30),
           }}
+          zIndex={window.google.maps.Marker.MAX_ZINDEX + 100}
         />
       ))}
     </GoogleMap>
