@@ -93,6 +93,7 @@ const Map = ({
             fontWeight: "bold",
             labelOrigin: new window.google.maps.Point(20, -30),
           }}
+          zIndex={30}
         />
       ))}
     </GoogleMap>
