@@ -39,10 +39,25 @@ const SingleJourney = () => {
   const [sortedJourney, setSortedJourney] = useState([]);
   const [alertMessages, setAlertMessages] = useState([]);
   const [isStreetView, setIsStreetView] = useState(false);
+  const [isCardsVisible, setIsCardsVisible] = useState(window.innerWidth > 768);
   const { id: journeyId } = useParams();
   const queryClient = useQueryClient();
   const formattedTripDate = tripDate.format("YYYY-MM-DD");
   const formattedTripStartTime = tripStartTime.format("HH:mm");
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsCardsVisible(true);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const checkDuplicateDate = (
     journeyData,
@@ -297,6 +312,11 @@ const SingleJourney = () => {
     setIsStreetView(!isStreetView);
   };
 
+  const toggleCardsVisibility = () => {
+    if (window.innerWidth > 768) return;
+    setIsCardsVisible(!isCardsVisible);
+  };
+
   if (!isLoaded)
     return (
       <LoaderWrapper>
@@ -359,19 +379,24 @@ const SingleJourney = () => {
           )}
         </>
       )}
-      <CardsContainer>
-        <JourneyList
-          journeys={journeyData}
-          journeyId={journeyId}
-          isLoading={isLoading}
-          error={error}
-          onUpdate={handleUpdate}
-          onClickCard={handleCardClick}
-          onDelete={handleDelete}
-          sortedJourney={sortedJourney}
-          placeId={placeDetails?.place_id}
-        />
-      </CardsContainer>
+      {isCardsVisible && (
+        <CardsContainer>
+          <JourneyList
+            journeys={journeyData}
+            journeyId={journeyId}
+            isLoading={isLoading}
+            error={error}
+            onUpdate={handleUpdate}
+            onClickCard={handleCardClick}
+            onDelete={handleDelete}
+            sortedJourney={sortedJourney}
+            placeId={placeDetails?.place_id}
+          />
+        </CardsContainer>
+      )}
+      <ToggleButton onClick={toggleCardsVisibility}>
+        {isCardsVisible ? "隱藏行程列表" : "顯示行程列表"}
+      </ToggleButton>
       {alertMessages?.map((message, index) => (
         <AlertMessage key={index} message={message} severity="success" />
       ))}
@@ -391,23 +416,60 @@ const LoaderWrapper = styled.div`
 const Container = styled.div`
   display: flex;
   width: 100%;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const MapContainer = styled.div`
   position: relative;
   width: 75%;
   height: 100vh;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    z-index: 1;
+  }
 `;
 
 const CardsContainer = styled.div`
   position: relative;
   width: 25%;
+  min-width: 270px;
   height: 100vh;
+  background-color: white;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    z-index: 2;
+  }
+`;
+
+const ToggleButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 60px;
+  padding: 10px 20px;
+  background-color: #57c2e9;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 3;
+  font-weight: 600;
+  font-size: 14px;
+  @media (min-width: 769px) {
+    display: none;
+  }
 `;
 
 const SearchButton = styled.button`
   color: #2d4057;
-  width: 180px;
+  width: 190px;
   height: 44px;
   background-color: white;
   border: none;
@@ -426,9 +488,14 @@ const SearchButton = styled.button`
   &:hover {
     transform: translateX(-50%) scale(1.1);
   }
+
+  @media (min-width: 769px) {
+    top: 50px;
+  }
 `;
 
 const SearchIcon = styled.img`
   width: 24px;
   height: 24px;
+  margin-right: 8px;
 `;

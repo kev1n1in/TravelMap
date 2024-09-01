@@ -4,6 +4,7 @@ import {
   createNewJourney,
   saveJourneyInfo,
   fetchJourneyInfo,
+  deleteJourney,
 } from "../../firebase/firebaseService";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -20,7 +21,6 @@ import ConfirmDialog from "../../components/ConfirmDialog";
 import AlertMessage from "../../components/AlertMessage";
 import travelGif from "./img/travelImg.png";
 import homeImg from "./img/home.png";
-import ActionButton from "../../components/Buttons/ActionButton";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -41,11 +41,13 @@ const JourneyList = ({
     description: "",
   });
   const [open, setOpen] = useState(false);
+  const [dialogType, setDialogType] = useState("");
   const [selectedJourney, setSelectedJourney] = useState(null);
   const [alertMessage, setAlertMessage] = useState("");
 
-  const handleOpenDialog = (journey) => {
+  const handleOpenDialog = (journey, type) => {
     setSelectedJourney(journey);
+    setDialogType(type);
     setOpen(true);
   };
 
@@ -53,11 +55,28 @@ const JourneyList = ({
     setOpen(false);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (selectedJourney) {
-      onDelete(journeyId, selectedJourney.place_id);
-      setOpen(false);
+      try {
+        if (dialogType === "journey") {
+          await deleteJourney(selectedJourney.id);
+          setAlertMessage("行程已成功刪除！");
+          navigate("/home");
+        } else if (dialogType === "place") {
+          onDelete(journeyId, selectedJourney.place_id);
+          setAlertMessage("地點已成功刪除！");
+        }
+      } catch (error) {
+        setAlertMessage("刪除時出現錯誤");
+        console.log(error.message);
+      } finally {
+        setOpen(false);
+      }
     }
+  };
+
+  const handleDeleteJourney = () => {
+    handleOpenDialog({ id: journeyId, name: newJourney.title }, "journey");
   };
 
   const formatDate = (dateStr) => {
@@ -144,7 +163,9 @@ const JourneyList = ({
     <>
       <TitleWrapper>
         <Title>行程列表</Title>
-        <HomeButton onClick={handleBackHome} src={homeImg} />
+        <ButtonGroup>
+          <HomeButton onClick={handleBackHome} src={homeImg} />
+        </ButtonGroup>
       </TitleWrapper>
       <ListWrapper>
         <TypeWrapper>
@@ -161,11 +182,15 @@ const JourneyList = ({
             onChange={handleInputChange}
           />
           <ActionButtonWrapper>
-            <ActionButton
+            <StyledButton
               onClick={handleCreateOrSaveJourneyClick}
               disabled={createMutation.isLoading}
-              isCreating={!journeyId}
-            />
+            >
+              {journeyId ? "保存行程" : "創建行程"}
+            </StyledButton>
+            <DeleteJourneyButton onClick={handleDeleteJourney}>
+              刪除行程
+            </DeleteJourneyButton>
           </ActionButtonWrapper>
         </TypeWrapper>
         <ContentWrapper>
@@ -213,7 +238,7 @@ const JourneyList = ({
                           <RemoveButton
                             onClick={(event) => {
                               event.stopPropagation();
-                              handleOpenDialog(journey);
+                              handleOpenDialog(journey, "place");
                             }}
                             whileHover={{ scale: 1.2 }}
                             whileTap={{ scale: 0.8 }}
@@ -250,11 +275,11 @@ const JourneyList = ({
           open={open}
           onClose={handleCloseDialog}
           onConfirm={handleConfirmDelete}
-          title="確認刪除"
+          title={dialogType === "journey" ? "確認刪除行程" : "確認刪除地點"}
           contentText={
             <span>
               您確定要刪除{" "}
-              <span style={{ color: "#57c2e9", fontWeight: "500" }}>
+              <span style={{ color: "#d02c2c", fontWeight: "500" }}>
                 {selectedJourney?.name}
               </span>{" "}
               嗎？此操作無法撤銷。
@@ -262,14 +287,12 @@ const JourneyList = ({
           }
           confirmButtonText="確定刪除"
           cancelButtonText="取消"
-          confirmButtonColor="secondary"
+          confirmButtonColor="warning"
         />
       </ListWrapper>
     </>
   );
 };
-
-export default JourneyList;
 
 JourneyList.propTypes = {
   journeys: PropTypes.arrayOf(
@@ -299,8 +322,13 @@ JourneyList.propTypes = {
 
 const ListWrapper = styled.div`
   width: 100%;
+  min-width: 280px;
   padding: 5px 25px 10px 25px;
   box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 15px 30px;
+  }
 `;
 
 const TypeWrapper = styled.div`
@@ -309,10 +337,16 @@ const TypeWrapper = styled.div`
 `;
 
 const ActionButtonWrapper = styled.div`
+  display: flex;
+  gap: 10px;
   position: absolute;
   right: 0;
   bottom: -56px;
+  @media (max-width: 1280px) {
+    right: 10px;
+  }
 `;
+
 const TitleWrapper = styled.div`
   width: 100%;
   background-color: #fff;
@@ -321,41 +355,105 @@ const TitleWrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px 10px 20px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 2px -2px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 10px 15px;
+  }
 `;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const ButtonBase = styled.button`
+  background-color: #57c2e9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+  }
+`;
+
+const DeleteJourneyButton = styled(ButtonBase)`
+  background-color: #bdc3c7;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+const StyledButton = styled(ButtonBase)``;
 
 const Title = styled.h2`
   font-size: 26px;
-  color: rgb(30, 159, 210);
-  font-weight: 700;
+  color: #57c2e9;
+  font-weight: 800;
   text-shadow: 2px 2px 4px rgba(214, 212, 212, 0.642);
 `;
 
 const JourneyTitleInput = styled.input`
-  width: 100%;
-  padding-top: 16px;
+  width: 90%;
+  margin-top: 16px;
   font-size: 24px;
   border: none;
-  border-radius: 4px;
-  outline: none;
+  border-bottom: 2px solid rgba(204, 204, 204, 0.7);
+  border-radius: 0;
   font-weight: 500;
+  padding: 12px;
+  outline: none;
+  resize: none;
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+
+  &:focus {
+    border-bottom: 2px solid #919191;
+  }
 `;
 
 const JourneyDescriptionInput = styled.textarea`
-  width: 100%;
-  height: 80px;
-  padding: 16px 48px 0 0;
-  margin-bottom: 5px;
+  width: 90%;
+  height: 50px;
+  padding: 12px 12px 12px 12px;
   font-size: 20px;
   border: none;
+  border-bottom: 2px solid rgba(204, 204, 204, 0.7);
   resize: none;
   outline: none;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+    padding: 12px 0 0 0;
+  }
+
+  &:focus {
+    border-bottom: 2px solid #919191;
+  }
 `;
 
 const ContentWrapper = styled.div`
   height: calc(100vh - 320px);
   margin-top: 16px;
   overflow-y: auto;
+  padding: 10px;
+
+  @media (max-width: 768px) {
+    height: calc(100vh - 260px);
+    padding: 8px;
+  }
 `;
 
 const JourneyDateSection = styled.div`
@@ -373,13 +471,17 @@ const JourneyCard = styled.div`
   position: relative;
   border: none;
   border-radius: 4px;
-
   margin-bottom: 16px;
-  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.2s ease-in-out;
   background-color: white;
   cursor: pointer;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    border-radius: 0;
+  }
 `;
 
 const JourneyImageWrapper = styled.div`
@@ -406,7 +508,7 @@ const JourneyContent = styled.div`
 
 const JourneyTitle = styled.h3`
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 18px;
   font-weight: bold;
   color: #333;
 `;
@@ -419,7 +521,13 @@ const JourneyTime = styled.p`
   font-weight: 700;
   border-radius: 4px;
   color: #57c2e9;
+
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+    margin-top: 8px;
+  }
 `;
+
 const TimeContainer = styled.div`
   display: flex;
   position: relative;
@@ -431,6 +539,11 @@ const ClockIcon = styled.img`
   right: 4px;
   width: 24px;
   height: 24px;
+
+  @media (max-width: 768px) {
+    width: 20px;
+    height: 20px;
+  }
 `;
 
 const TimeDifference = styled.p`
@@ -446,6 +559,16 @@ const HomeButton = styled.img`
   width: 36px;
   height: 36px;
   cursor: pointer;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 768px) {
+    right: 15px;
+    width: 30px;
+    height: 30px;
+  }
 `;
 
 const TravelImg = styled.img`
@@ -506,3 +629,5 @@ const RemoveImg = styled(motion.img)`
     opacity: 0.7;
   }
 `;
+
+export default JourneyList;
