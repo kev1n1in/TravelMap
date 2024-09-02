@@ -413,7 +413,6 @@ const ContentWrapper = styled.div`
   height: calc(100vh - 320px);
   margin-top: 16px;
   overflow-y: auto;
-  padding: 10px;
 
   @media (max-width: 768px) {
     height: calc(100vh - 260px);
@@ -537,7 +536,7 @@ const HomeButton = styled.img`
 `;
 
 const TravelImg = styled.img`
-  height: 280px;
+  height: 220px;
   margin-top: 48px;
   width: auto;
 `;

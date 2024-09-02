@@ -12,6 +12,7 @@ import dayjs from "dayjs";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import Rating from "@mui/material/Rating";
 import Switch from "@mui/material/Switch";
+import { initializeStreetView } from "../../utils/mapApi";
 
 const StreetViewModal = ({
   placeDetails,
@@ -32,19 +33,8 @@ const StreetViewModal = ({
   const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
-    if (
-      placeDetails &&
-      placeDetails.geometry &&
-      placeDetails.geometry.location
-    ) {
-      new window.google.maps.StreetViewPanorama(streetViewRef.current, {
-        position: {
-          lat: placeDetails.geometry.location.lat(),
-          lng: placeDetails.geometry.location.lng(),
-        },
-        pov: { heading: 165, pitch: 0 },
-        zoom: 1,
-      });
+    if (placeDetails && streetViewRef.current) {
+      initializeStreetView(streetViewRef.current, placeDetails);
     }
   }, [placeDetails]);
 
@@ -126,6 +116,7 @@ const StreetViewModal = ({
                 <ModalButton onClick={handleOpenDialog}>刪除此地標</ModalButton>
               </ButtonWrapper>
             )}
+            <Message>街景模式僅在桌機版可使用</Message>
           </ModalFooter>
         </InfoContainer>
       </ModalContainer>
@@ -198,9 +189,16 @@ const ModalContainer = styled.div`
   background-color: white;
   padding: 0;
   border-radius: 8px;
-  width: 80%;
-  height: auto;
+  width: 819px;
+  height: 661px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+    padding: 0;
+    display: block;
+  }
 `;
 
 const StreetViewContainer = styled.div`
@@ -215,7 +213,7 @@ const StreetViewContainer = styled.div`
 
 const InfoContainer = styled.div`
   position: relative;
-  width: 40%;
+  width: 375px;
   padding: 10px 20px 25px 25px;
   background-color: rgba(0, 0, 0, 0.6);
   color: white;
@@ -236,9 +234,9 @@ const CloseIcon = styled.img`
 
 const StyledDateCalendar = styled(DateCalendar)`
   position: relative;
-  right: 15px;
-  width: 100%;
-  height: 280px !important;
+
+  width: 300px !important;
+  height: 300px !important;
   background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
   .MuiTypography-root {
@@ -262,12 +260,14 @@ const StyledDateCalendar = styled(DateCalendar)`
 
 const StyledTimePicker = styled(TimePicker)`
   position: relative;
-  top: 10px;
-  right: 60px;
   background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
   border-radius: 8px;
   margin-top: 16px;
+
+  padding: 8px;
+  right: 35px;
+  top: 10px;
 
   .MuiTypography-root {
     color: #fff;
@@ -285,7 +285,6 @@ const StyledTimePicker = styled(TimePicker)`
 const AttractionName = styled.h1`
   position: relative;
   width: 250px;
-  top: 10px;
   color: white;
   font-size: 24px;
   font-weight: 700;
@@ -293,8 +292,6 @@ const AttractionName = styled.h1`
 
 const ModalHeader = styled.div`
   width: 100%;
-  height: 50px;
-  margin: 10px 0px 0px 0px;
 `;
 
 const ModalMain = styled.div`
@@ -304,6 +301,7 @@ const ModalMain = styled.div`
 
 const RatingWrapper = styled.div`
   display: flex;
+  margin-top: 10px;
 `;
 
 const RatingText = styled.p`
@@ -333,11 +331,18 @@ const AddressText = styled.h3`
 
 const ModalFooter = styled.div`
   width: 100%;
+  position: relative;
+  bottom: 10px;
+  right: -10px;
   display: flex;
   justify-content: end;
 `;
 
 const SwitchContainer = styled.div`
+  position: relative;
+  right: 36px;
+  top: 8px;
+  width: 30px;
   display: flex;
   align-items: center;
 `;
@@ -353,13 +358,20 @@ const ButtonWrapper = styled.div`
 
 const ModalButton = styled.button`
   background-color: #57c2e9;
+  position: relative;
+  right: 10px;
   color: white;
   border: none;
   padding: 10px 20px;
-  margin: 10px;
+  margin: 10px 0 0 10px;
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;
+`;
+const Message = styled.span`
+  position: absolute;
+  right: 11px;
+  top: 59px;
 `;
 
 export default StreetViewModal;
