@@ -16,7 +16,7 @@ const ConfirmDialog = ({
   contentText = "您確定要進行此操作嗎？此操作無法撤銷。",
   confirmButtonText = "確定",
   cancelButtonText = "取消",
-  confirmButtonColor = "error",
+  confirmButtonColor = "#57c2e9",
 }) => {
   return (
     <Dialog open={open} onClose={onClose}>
