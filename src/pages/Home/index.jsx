@@ -28,6 +28,7 @@ import AlertMessage from "../../components/AlertMessage";
 import Header from "../../components/Header";
 import searchPng from "./search-interface.png";
 import bannerPng from "./banner.jpg";
+import bannerPng2 from "./banner2.jpg";
 
 const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
@@ -215,13 +216,7 @@ const Home = () => {
     <>
       <Header onSearchChange={handleSearchChange} />
       <Container>
-        <BannerContainer>
-          <BannerText>
-            生活為了旅行
-            <br />
-            而且旅行又是為了生活
-          </BannerText>
-        </BannerContainer>
+        <BannerContainer></BannerContainer>
         <SearchContainer>
           <SearchImg src={searchPng} />
           <SearchInput placeholder="搜尋行程" onChange={handleSearchChange} />
@@ -319,25 +314,24 @@ const BannerContainer = styled.div`
   align-items: center;
 
   @media (max-width: 768px) {
-    height: 250px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  }
-`;
+    height: 300px;
+    background-image: url(${bannerPng2});
 
-const BannerText = styled.h1`
-  display: none;
-  position: relative;
-  left: 60px;
-  color: white;
-  font-size: 36px;
-  font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  position: absolute;
-  text-align: left;
-
-  @media (max-width: 768px) {
-    display: flex;
-    font-size: 36px;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(255, 255, 255, 0.8) 90%,
+        rgba(255, 255, 255, 1) 100%
+      );
+      pointer-events: none;
+    }
   }
 `;
 

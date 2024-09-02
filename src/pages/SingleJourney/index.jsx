@@ -480,7 +480,7 @@ const SearchButton = styled.button`
   position: absolute;
   top: 20px;
   left: 50%;
-  transform: translateX(-50%);
+
   display: flex;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   cursor: pointer;
@@ -491,6 +491,7 @@ const SearchButton = styled.button`
 
   @media (min-width: 769px) {
     top: 50px;
+    transform: translateX(-50%);
   }
 `;
 

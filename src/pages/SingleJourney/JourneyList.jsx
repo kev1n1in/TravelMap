@@ -264,7 +264,7 @@ const JourneyList = ({
           ) : (
             <>
               <TravelImg src={travelGif} />
-              <Message>這裡空空如也～</Message>
+              {/* <Message>這裡空空如也～</Message> */}
             </>
           )}
         </ContentWrapper>
@@ -279,7 +279,7 @@ const JourneyList = ({
           contentText={
             <span>
               您確定要刪除{" "}
-              <span style={{ color: "#d02c2c", fontWeight: "500" }}>
+              <span style={{ color: "#57c2e9", fontWeight: "600" }}>
                 {selectedJourney?.name}
               </span>{" "}
               嗎？此操作無法撤銷。
@@ -322,7 +322,7 @@ JourneyList.propTypes = {
 
 const ListWrapper = styled.div`
   width: 100%;
-  min-width: 280px;
+  min-width: 270px;
   padding: 5px 25px 10px 25px;
   box-sizing: border-box;
 
@@ -337,6 +337,7 @@ const TypeWrapper = styled.div`
 `;
 
 const ActionButtonWrapper = styled.div`
+  margin: 0px 20px 2px 0px;
   display: flex;
   gap: 10px;
   position: absolute;
@@ -409,8 +410,7 @@ const JourneyTitleInput = styled.input`
   margin-top: 16px;
   font-size: 24px;
   border: none;
-  border-bottom: 2px solid rgba(204, 204, 204, 0.7);
-  border-radius: 0;
+  border-bottom: 2px solid rgba(204, 204, 204, 0.3);
   font-weight: 500;
   padding: 12px;
   outline: none;
@@ -427,13 +427,13 @@ const JourneyTitleInput = styled.input`
 const JourneyDescriptionInput = styled.textarea`
   width: 90%;
   height: 50px;
-  padding: 12px 12px 12px 12px;
+  padding: 12px;
+  margin-bottom: 10px;
   font-size: 20px;
   border: none;
-  border-bottom: 2px solid rgba(204, 204, 204, 0.7);
+  border-bottom: 2px solid rgba(204, 204, 204, 0.3);
   resize: none;
   outline: none;
-
   @media (max-width: 768px) {
     font-size: 18px;
     padding: 12px 0 0 0;
