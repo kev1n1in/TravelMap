@@ -39,7 +39,7 @@ const SingleJourney = () => {
   const [sortedJourney, setSortedJourney] = useState([]);
   const [alertMessages, setAlertMessages] = useState([]);
   const [isStreetView, setIsStreetView] = useState(false);
-  const [isCardsVisible, setIsCardsVisible] = useState(window.innerWidth > 768);
+  const [isCardsVisible, setIsCardsVisible] = useState(window.innerWidth > 768); //這裡要寫到css
   const { id: journeyId } = useParams();
   const queryClient = useQueryClient();
   const formattedTripDate = tripDate.format("YYYY-MM-DD");
