@@ -314,7 +314,7 @@ const BannerContainer = styled.div`
   align-items: center;
 
   @media (max-width: 768px) {
-    height: 300px;
+    height: 250px;
     background-image: url(${bannerPng2});
 
     &::after {
