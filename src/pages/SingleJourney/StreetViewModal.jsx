@@ -201,6 +201,13 @@ const ModalContainer = styled.div`
   width: 80%;
   height: auto;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+    padding: 0;
+    display: block;
+  }
 `;
 
 const StreetViewContainer = styled.div`
@@ -215,7 +222,7 @@ const StreetViewContainer = styled.div`
 
 const InfoContainer = styled.div`
   position: relative;
-  width: 40%;
+  width: 367px;
   padding: 10px 20px 25px 25px;
   background-color: rgba(0, 0, 0, 0.6);
   color: white;
@@ -236,9 +243,9 @@ const CloseIcon = styled.img`
 
 const StyledDateCalendar = styled(DateCalendar)`
   position: relative;
-  right: 15px;
-  width: 100%;
-  height: 280px !important;
+
+  width: 300px !important;
+  height: 300px !important;
   background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
   .MuiTypography-root {
@@ -262,8 +269,6 @@ const StyledDateCalendar = styled(DateCalendar)`
 
 const StyledTimePicker = styled(TimePicker)`
   position: relative;
-  top: 10px;
-  right: 60px;
   background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
   border-radius: 8px;
@@ -285,7 +290,6 @@ const StyledTimePicker = styled(TimePicker)`
 const AttractionName = styled.h1`
   position: relative;
   width: 250px;
-  top: 10px;
   color: white;
   font-size: 24px;
   font-weight: 700;

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import searchImg from "./search-interface.png";
 
-const Header = ({ onSearchChange }) => {
+const Header = ({ onSearchChange, onCreateJourney, isCreatingJourney }) => {
   const navigate = useNavigate();
   const [opacity, setOpacity] = useState(1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -58,8 +58,8 @@ const Header = ({ onSearchChange }) => {
         )}
       </SearchContainer>
       <IconWrapper>
-        <CreateJourneyButton onClick={() => navigate("/journey")}>
-          新增行程
+        <CreateJourneyButton onClick={onCreateJourney}>
+          {isCreatingJourney ? "關閉選單" : "新增行程"}
         </CreateJourneyButton>
         <Logout onClick={() => navigate("/")}>登出</Logout>
       </IconWrapper>
@@ -69,6 +69,8 @@ const Header = ({ onSearchChange }) => {
 
 Header.propTypes = {
   onSearchChange: PropTypes.func.isRequired,
+  onCreateJourney: PropTypes.func.isRequired,
+  isCreatingJourney: PropTypes.bool.isRequired,
 };
 
 const HeaderWrapper = styled.header`

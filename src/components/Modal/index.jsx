@@ -203,6 +203,7 @@ export default Modal;
 
 const ModalOverlay = styled.div`
   position: absolute;
+
   top: 0;
   left: 0;
   right: 0;
@@ -219,8 +220,9 @@ const ModalContainer = styled.div`
   position: relative;
   background-color: white;
   border-radius: 8px;
-  width: 80%;
-  height: auto;
+  height: 685px;
+  width: 819px;
+
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
@@ -232,19 +234,16 @@ const ModalContainer = styled.div`
 `;
 
 const PhotosContainer = styled.div`
-  border-radius: 8px 0px 0px 8px;
+  border-radius: 8px 0 0 8px;
   width: 60%;
   position: relative;
   overflow: hidden;
+  min-height: 300px; // 设置一个最小高度以防图片过于压缩
+
   @media (max-width: 768px) {
-    border-radius: 0px;
-    margin-top: 60px;
-    display: flex;
-    position: sticky;
-    z-index: 2;
     width: 100%;
-    justify-content: center;
-    align-items: center;
+    height: auto;
+    min-height: 200px;
   }
 `;
 
@@ -275,7 +274,7 @@ const SlideButton = styled.button`
 `;
 
 const InfoContainer = styled.div`
-  width: 40%;
+  width: 350px;
   margin: 10px 20px 25px 25px;
 
   @media (max-width: 768px) {

@@ -28,6 +28,7 @@ import AlertMessage from "../../components/AlertMessage";
 import Header from "../../components/Header";
 import searchPng from "./search-interface.png";
 import bannerPng from "./banner.jpg";
+import JourneyCreator from "./JourneyCreator";
 
 const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
@@ -41,6 +42,7 @@ const Home = () => {
   const [selectedDocName, setSelectedDocName] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertKey, setAlertKey] = useState(0);
+  const [showJourneyCreator, setShowJourneyCreator] = useState(false);
 
   const {
     data,
@@ -138,8 +140,12 @@ const Home = () => {
     }
   }, [data, search, status]);
 
-  const handleSearchChange = (value) => {
-    setSearch(value);
+  const handleSearchChange = (event) => {
+    const searchString = event.target.value;
+    setSearch(searchString);
+    if (typeof searchString === "string") {
+      setSearch(searchString.toLowerCase());
+    }
   };
 
   const showMessage = (msg) => {
@@ -211,9 +217,20 @@ const Home = () => {
   if (authError || error)
     return <p>獲取用戶文檔時出錯: {authError?.message || error.message}</p>;
 
+  const toggleJourneyCreator = () => {
+    setShowJourneyCreator(!showJourneyCreator);
+  };
+
   return (
     <>
-      <Header onSearchChange={handleSearchChange} />
+      <Header
+        onSearchChange={handleSearchChange}
+        onCreateJourney={toggleJourneyCreator}
+        isCreatingJourney={showJourneyCreator}
+      />
+      {showJourneyCreator && (
+        <JourneyCreator onClose={() => setShowJourneyCreator(false)} />
+      )}
       <Container>
         <BannerContainer>
           <BannerText>
