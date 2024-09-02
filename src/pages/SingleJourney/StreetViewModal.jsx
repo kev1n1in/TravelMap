@@ -126,6 +126,7 @@ const StreetViewModal = ({
                 <ModalButton onClick={handleOpenDialog}>刪除此地標</ModalButton>
               </ButtonWrapper>
             )}
+            <Message>街景模式僅在桌機版可使用</Message>
           </ModalFooter>
         </InfoContainer>
       </ModalContainer>
@@ -198,8 +199,8 @@ const ModalContainer = styled.div`
   background-color: white;
   padding: 0;
   border-radius: 8px;
-  width: 80%;
-  height: auto;
+  width: 819px;
+  height: 661px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   @media (max-width: 768px) {
     width: 100%;
@@ -222,7 +223,7 @@ const StreetViewContainer = styled.div`
 
 const InfoContainer = styled.div`
   position: relative;
-  width: 367px;
+  width: 375px;
   padding: 10px 20px 25px 25px;
   background-color: rgba(0, 0, 0, 0.6);
   color: white;
@@ -274,6 +275,10 @@ const StyledTimePicker = styled(TimePicker)`
   border-radius: 8px;
   margin-top: 16px;
 
+  padding: 8px;
+  right: 35px;
+  top: 10px;
+
   .MuiTypography-root {
     color: #fff;
   }
@@ -297,8 +302,6 @@ const AttractionName = styled.h1`
 
 const ModalHeader = styled.div`
   width: 100%;
-  height: 50px;
-  margin: 10px 0px 0px 0px;
 `;
 
 const ModalMain = styled.div`
@@ -308,6 +311,7 @@ const ModalMain = styled.div`
 
 const RatingWrapper = styled.div`
   display: flex;
+  margin-top: 10px;
 `;
 
 const RatingText = styled.p`
@@ -337,6 +341,9 @@ const AddressText = styled.h3`
 
 const ModalFooter = styled.div`
   width: 100%;
+  position: relative;
+  bottom: 10px;
+  right: -10px;
   display: flex;
   justify-content: end;
 `;
@@ -364,6 +371,11 @@ const ModalButton = styled.button`
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;
+`;
+const Message = styled.span`
+  position: absolute;
+  right: 11px;
+  top: 59px;
 `;
 
 export default StreetViewModal;

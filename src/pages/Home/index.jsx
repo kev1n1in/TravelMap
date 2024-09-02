@@ -29,11 +29,12 @@ import Header from "../../components/Header";
 import searchPng from "./search-interface.png";
 import bannerPng from "./banner.jpg";
 import JourneyCreator from "./JourneyCreator";
+import bannerPng2 from "./banner2.jpg";
 
 const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(""); //
   const [filteredSearch, setFilteredSearch] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
@@ -63,13 +64,15 @@ const Home = () => {
     if (status === "success" && data) {
       const allDocs = data.pages.flatMap((page) => page.journeys);
 
+      // 確保 search 是字串
+      const searchStr = typeof search === "string" ? search.toLowerCase() : "";
+
       const filtered = allDocs.filter((journeyDoc) => {
         return (
-          journeyDoc.title.toLowerCase().includes(search.toLowerCase()) ||
-          journeyDoc.description.toLowerCase().includes(search.toLowerCase())
+          journeyDoc.title.toLowerCase().includes(searchStr) ||
+          journeyDoc.description.toLowerCase().includes(searchStr)
         );
       });
-
       const journeyTimesData = {};
       const unsubscribeList = [];
 
@@ -140,12 +143,8 @@ const Home = () => {
     }
   }, [data, search, status]);
 
-  const handleSearchChange = (event) => {
-    const searchString = event.target.value;
-    setSearch(searchString);
-    if (typeof searchString === "string") {
-      setSearch(searchString.toLowerCase());
-    }
+  const handleSearchChange = (value) => {
+    setSearch(value);
   };
 
   const showMessage = (msg) => {
@@ -196,7 +195,6 @@ const Home = () => {
         hasNextPage &&
         !isFetchingNextPage
       ) {
-        console.log("Fetching next page...");
         fetchNextPage();
       }
     };
@@ -232,23 +230,20 @@ const Home = () => {
         <JourneyCreator onClose={() => setShowJourneyCreator(false)} />
       )}
       <Container>
-        <BannerContainer>
-          <BannerText>
-            生活為了旅行
-            <br />
-            而且旅行又是為了生活
-          </BannerText>
-        </BannerContainer>
+        <BannerContainer></BannerContainer>
         <SearchContainer>
           <SearchImg src={searchPng} />
-          <SearchInput placeholder="搜尋行程" onChange={handleSearchChange} />
+          <SearchInput
+            placeholder="搜尋行程"
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
         </SearchContainer>
         <GridContainer>
           {filteredSearch.map((doc) => (
             <CardContainer
               key={doc.id}
               onClick={() => handleCardClick(doc.id)}
-              backgroundImage={
+              backgroundimage={
                 doc.journey &&
                 doc.journey.length > 0 &&
                 doc.journey[0].photos &&
@@ -286,13 +281,12 @@ const Home = () => {
               />
             </CardContainer>
           ))}
-
-          {isFetchingNextPage && (
-            <LoaderWrapper>
-              <RingLoader color="#57c2e9" />
-            </LoaderWrapper>
-          )}
         </GridContainer>
+        {isFetchingNextPage && (
+          <LoaderWrapper>
+            <RingLoader color="#57c2e9" />
+          </LoaderWrapper>
+        )}
         <ConfirmDialog
           open={open}
           onClose={handleCloseDialog}
@@ -320,7 +314,7 @@ const Home = () => {
 
 const Container = styled.div`
   height: 120vh;
-  overflow-y: auto;
+  overflow-y: cover;
   margin-top: 80px;
 `;
 
@@ -336,25 +330,24 @@ const BannerContainer = styled.div`
   align-items: center;
 
   @media (max-width: 768px) {
-    height: 250px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  }
-`;
+    height: 300px;
+    background-image: url(${bannerPng2});
 
-const BannerText = styled.h1`
-  display: none;
-  position: relative;
-  left: 60px;
-  color: white;
-  font-size: 36px;
-  font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  position: absolute;
-  text-align: left;
-
-  @media (max-width: 768px) {
-    display: flex;
-    font-size: 36px;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(255, 255, 255, 0.8) 90%,
+        rgba(255, 255, 255, 1) 100%
+      );
+      pointer-events: none;
+    }
   }
 `;
 
@@ -419,7 +412,7 @@ const CardContainer = styled.div`
   position: relative;
   height: 250px;
   width: 100%;
-  background-image: url(${(props) => props.backgroundImage || defaultImg});
+  background-image: url(${(props) => props.backgroundimage});
   background-size: cover;
   background-position: center;
   border-radius: 13px;

@@ -86,9 +86,7 @@ const Modal = ({
         </PhotosContainer>
         <InfoContainer>
           <CloseIcon src={closeImg} onClick={onClose} />
-          <ModalHeader>
-            <AttractionName>{placeDetails.name}</AttractionName>
-          </ModalHeader>
+          <AttractionName>{placeDetails.name}</AttractionName>
           <ModalMain>
             <RatingWrapper>
               <Rating
@@ -120,10 +118,9 @@ const Modal = ({
                   />
                 </Grid>
                 <Grid item>
-                  <TimePicker
+                  <StyledTimePicker
                     value={tripStartTime}
                     onChange={onChangeTime}
-                    style={{ padding: "8px" }}
                   />
                 </Grid>
               </Grid>
@@ -143,6 +140,7 @@ const Modal = ({
                 <ModalButton onClick={handleOpenDialog}>刪除此地標</ModalButton>
               </ButtonWrapper>
             )}
+            <Message>街景模式僅在桌機版可使用</Message>
           </ModalFooter>
         </InfoContainer>
       </ModalContainer>
@@ -203,7 +201,6 @@ export default Modal;
 
 const ModalOverlay = styled.div`
   position: absolute;
-
   top: 0;
   left: 0;
   right: 0;
@@ -220,9 +217,8 @@ const ModalContainer = styled.div`
   position: relative;
   background-color: white;
   border-radius: 8px;
-  height: 685px;
   width: 819px;
-
+  height: 661px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
@@ -230,27 +226,34 @@ const ModalContainer = styled.div`
     border-radius: 0px;
     width: 100%;
     height: 100vh;
+    box-shadow: none;
   }
 `;
 
 const PhotosContainer = styled.div`
-  border-radius: 8px 0 0 8px;
+  border-radius: 8px 0px 0px 8px;
   width: 60%;
   position: relative;
-  overflow: hidden;
-  min-height: 300px; // 设置一个最小高度以防图片过于压缩
-
   @media (max-width: 768px) {
+    border-radius: 0px;
+    margin-top: 60px;
+    display: flex;
+    height: 300px;
+    z-index: 2;
     width: 100%;
-    height: auto;
-    min-height: 200px;
+    justify-content: center;
+    align-items: center;
   }
 `;
 
 const SlideImage = styled.img`
+  border-radius: 8px 0px 0px 8px;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  @media (max-width: 768px) {
+    border-radius: 0px;
+  }
 `;
 
 const SlideButton = styled.button`
@@ -274,7 +277,7 @@ const SlideButton = styled.button`
 `;
 
 const InfoContainer = styled.div`
-  width: 350px;
+  width: 367px;
   margin: 10px 20px 25px 25px;
 
   @media (max-width: 768px) {
@@ -283,27 +286,21 @@ const InfoContainer = styled.div`
   }
 `;
 
-const ModalHeader = styled.div`
-  width: 100%;
-  height: 50px;
-  margin: 10px 0px 0px 0px;
-  @media (max-width: 768px) {
-    background-color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0;
-    position: fixed;
-    top: 0;
-    z-index: 1;
-  }
-`;
-
 const AttractionName = styled.h1`
   width: 250px;
   color: #2d4057;
   font-size: 24px;
   font-weight: 700;
+  @media (max-width: 768px) {
+    background-color: white;
+    margin: 0;
+    position: fixed;
+    top: 0;
+    z-index: 5;
+    width: 100%;
+    text-align: center;
+    padding: 10px 0px;
+  }
 `;
 
 const CloseIcon = styled.img`
@@ -314,7 +311,7 @@ const CloseIcon = styled.img`
   height: 20px;
   cursor: pointer;
   @media (max-width: 768px) {
-    z-index: 2;
+    z-index: 8;
   }
 `;
 
@@ -326,11 +323,15 @@ const ModalMain = styled.div`
     padding: 10px 0px 25px 25px;
     flex: 1;
     margin-bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 `;
 
 const RatingWrapper = styled.div`
   display: flex;
+  margin-top: 10px;
 `;
 
 const RatingText = styled.p`
@@ -338,13 +339,21 @@ const RatingText = styled.p`
   font-size: 16px;
   font-weight: 400;
   margin-left: 10px;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const AddressWrapper = styled.div`
   display: flex;
   align-items: center;
+  justify-content: left;
   width: 100%;
   margin: 20px 0px 10px 0px;
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
 `;
 
 const AddressIcon = styled.img`
@@ -363,13 +372,14 @@ const ModalFooter = styled.div`
   width: 100%;
   display: flex;
   justify-content: end;
+  position: relative;
   @media (max-width: 768px) {
     position: fixed;
     z-index: 1;
     bottom: 5px;
     justify-content: space-around;
     align-items: center;
-    padding: 10px 10px 5px 20px;
+    padding: 10px 10px 10px 20px;
     background-color: white;
   }
 `;
@@ -400,4 +410,20 @@ const ModalButton = styled.button`
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;
+`;
+const StyledTimePicker = styled(TimePicker)`
+  padding: 8px;
+  position: relative;
+  right: 35px;
+  top: 10px;
+  @media (max-width: 768px) {
+    right: 0;
+  }
+`;
+const Message = styled.span`
+  position: absolute;
+  top: 48px;
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;

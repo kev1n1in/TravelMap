@@ -33,14 +33,18 @@ const Header = ({ onSearchChange, onCreateJourney, isCreatingJourney }) => {
   };
 
   const handleSearchChange = (event) => {
-    setSearch(event.target.value);
-    onSearchChange(event.target.value);
+    if (!event || !event.target || typeof event.target.value === "undefined") {
+      return;
+    }
+    const value = event.target.value || "";
+    setSearch(value);
+    onSearchChange(value);
   };
 
   return (
     <HeaderWrapper opacity={opacity}>
       <LogoText>Time to Travel</LogoText>
-      <SearchContainer isSearchOpen={isSearchOpen}>
+      <SearchContainer>
         {isSearchOpen ? (
           <>
             <SearchInput
@@ -49,7 +53,7 @@ const Header = ({ onSearchChange, onCreateJourney, isCreatingJourney }) => {
               value={search}
               onChange={handleSearchChange}
               autoFocus
-              isSearchOpen={isSearchOpen}
+              $isSearchOpen={isSearchOpen}
             />
             <SearchImg src={searchImg} onClick={handleSearchToggle} />
           </>
@@ -142,7 +146,7 @@ const SearchContainer = styled.div`
   display: none;
   position: relative;
   margin-right: 10px;
-  width: ${({ isSearchOpen }) => (isSearchOpen ? "50%" : "24px")};
+  width: ${({ $isSearchOpen }) => ($isSearchOpen ? "50%" : "24px")};
   transition: width 0.3s ease;
   justify-content: flex-end;
   align-items: center;
@@ -154,7 +158,7 @@ const SearchContainer = styled.div`
 `;
 
 const SearchInput = styled.input`
-  width: ${({ isSearchOpen }) => (isSearchOpen ? "80%" : "0")};
+  width: ${({ $isSearchOpen }) => ($isSearchOpen ? "80%" : "0")};
   padding: 10px;
   font-size: 16px;
   border: 1px solid #ccc;
@@ -164,7 +168,8 @@ const SearchInput = styled.input`
   transition: width 0.3s ease;
   position: absolute;
   right: 0;
-  opacity: ${({ isSearchOpen }) => (isSearchOpen ? 1 : 0)};
+  opacity: ${({ $isSearchOpen }) => ($isSearchOpen ? 1 : 0)};
+  visibility: ${({ $isSearchOpen }) => ($isSearchOpen ? "visible" : "hidden")};
 `;
 
 const SearchImg = styled.img`

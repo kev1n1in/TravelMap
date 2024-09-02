@@ -39,7 +39,7 @@ const SingleJourney = () => {
   const [sortedJourney, setSortedJourney] = useState([]);
   const [alertMessages, setAlertMessages] = useState([]);
   const [isStreetView, setIsStreetView] = useState(false);
-  const [isCardsVisible, setIsCardsVisible] = useState(window.innerWidth > 768); //這裡要寫到css
+  const [isCardsVisible, setIsCardsVisible] = useState("");
   const { id: journeyId } = useParams();
   const queryClient = useQueryClient();
   const formattedTripDate = tripDate.format("YYYY-MM-DD");
@@ -47,12 +47,12 @@ const SingleJourney = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 768) {
-        setIsCardsVisible(true);
-      }
+      setIsCardsVisible(window.innerWidth > 768);
+      setIsStreetView(window.innerWidth > 768);
     };
 
     window.addEventListener("resize", handleResize);
+    handleResize();
 
     return () => {
       window.removeEventListener("resize", handleResize);
@@ -488,7 +488,6 @@ const SearchButton = styled.button`
   &:hover {
     transform: translateX(-50%) scale(1.1);
   }
-
   @media (min-width: 769px) {
     top: 50px;
   }

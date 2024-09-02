@@ -39,7 +39,7 @@ ConfirmDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   title: PropTypes.string,
-  contentText: PropTypes.string,
+  contentText: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   confirmButtonText: PropTypes.string,
   cancelButtonText: PropTypes.string,
   confirmButtonColor: PropTypes.string,
