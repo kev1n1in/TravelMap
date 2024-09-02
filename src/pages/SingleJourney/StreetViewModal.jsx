@@ -12,6 +12,7 @@ import dayjs from "dayjs";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import Rating from "@mui/material/Rating";
 import Switch from "@mui/material/Switch";
+import { initializeStreetView } from "../../utils/mapApi";
 
 const StreetViewModal = ({
   placeDetails,
@@ -32,19 +33,8 @@ const StreetViewModal = ({
   const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
-    if (
-      placeDetails &&
-      placeDetails.geometry &&
-      placeDetails.geometry.location
-    ) {
-      new window.google.maps.StreetViewPanorama(streetViewRef.current, {
-        position: {
-          lat: placeDetails.geometry.location.lat(),
-          lng: placeDetails.geometry.location.lng(),
-        },
-        pov: { heading: 165, pitch: 0 },
-        zoom: 1,
-      });
+    if (placeDetails && streetViewRef.current) {
+      initializeStreetView(streetViewRef.current, placeDetails);
     }
   }, [placeDetails]);
 
@@ -349,6 +339,10 @@ const ModalFooter = styled.div`
 `;
 
 const SwitchContainer = styled.div`
+  position: relative;
+  right: 36px;
+  top: 8px;
+  width: 30px;
   display: flex;
   align-items: center;
 `;
@@ -364,10 +358,12 @@ const ButtonWrapper = styled.div`
 
 const ModalButton = styled.button`
   background-color: #57c2e9;
+  position: relative;
+  right: 10px;
   color: white;
   border: none;
   padding: 10px 20px;
-  margin: 10px;
+  margin: 10px 0 0 10px;
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;

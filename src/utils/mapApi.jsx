@@ -38,3 +38,24 @@ export const fetchPlaceDetails = (map, placeId) => {
     });
   });
 };
+
+export const initializeStreetView = (mapElement, placeDetails) => {
+  try {
+    if (
+      placeDetails &&
+      placeDetails.geometry &&
+      placeDetails.geometry.location
+    ) {
+      new window.google.maps.StreetViewPanorama(mapElement, {
+        position: {
+          lat: placeDetails.geometry.location.lat(),
+          lng: placeDetails.geometry.location.lng(),
+        },
+        pov: { heading: 165, pitch: 0 },
+        zoom: 1,
+      });
+    }
+  } catch (error) {
+    console.error("Failed to initialize Street View:", error);
+  }
+};

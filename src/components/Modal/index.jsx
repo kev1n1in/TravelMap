@@ -385,6 +385,9 @@ const ModalFooter = styled.div`
 `;
 
 const SwitchContainer = styled.div`
+  position: relative;
+  right: 8px;
+  width: 50px;
   display: flex;
   align-items: center;
   @media (max-width: 768px) {
