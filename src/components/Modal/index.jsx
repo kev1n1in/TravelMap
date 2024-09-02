@@ -118,10 +118,9 @@ const Modal = ({
                   />
                 </Grid>
                 <Grid item>
-                  <TimePicker
+                  <StyledTimePicker
                     value={tripStartTime}
                     onChange={onChangeTime}
-                    style={{ padding: "8px" }}
                   />
                 </Grid>
               </Grid>
@@ -141,6 +140,7 @@ const Modal = ({
                 <ModalButton onClick={handleOpenDialog}>刪除此地標</ModalButton>
               </ButtonWrapper>
             )}
+            <Message>街景模式僅在桌機版可使用</Message>
           </ModalFooter>
         </InfoContainer>
       </ModalContainer>
@@ -217,8 +217,8 @@ const ModalContainer = styled.div`
   position: relative;
   background-color: white;
   border-radius: 8px;
-  width: 80%;
-  height: auto;
+  width: 819px;
+  height: 661px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
@@ -277,7 +277,7 @@ const SlideButton = styled.button`
 `;
 
 const InfoContainer = styled.div`
-  width: 40%;
+  width: 367px;
   margin: 10px 20px 25px 25px;
 
   @media (max-width: 768px) {
@@ -331,6 +331,7 @@ const ModalMain = styled.div`
 
 const RatingWrapper = styled.div`
   display: flex;
+  margin-top: 10px;
 `;
 
 const RatingText = styled.p`
@@ -347,9 +348,12 @@ const RatingText = styled.p`
 const AddressWrapper = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
   width: 100%;
   margin: 20px 0px 10px 0px;
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
 `;
 
 const AddressIcon = styled.img`
@@ -368,6 +372,7 @@ const ModalFooter = styled.div`
   width: 100%;
   display: flex;
   justify-content: end;
+  position: relative;
   @media (max-width: 768px) {
     position: fixed;
     z-index: 1;
@@ -380,6 +385,9 @@ const ModalFooter = styled.div`
 `;
 
 const SwitchContainer = styled.div`
+  position: relative;
+  right: 8px;
+  width: 50px;
   display: flex;
   align-items: center;
   @media (max-width: 768px) {
@@ -405,4 +413,20 @@ const ModalButton = styled.button`
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;
+`;
+const StyledTimePicker = styled(TimePicker)`
+  padding: 8px;
+  position: relative;
+  right: 35px;
+  top: 10px;
+  @media (max-width: 768px) {
+    right: 0;
+  }
+`;
+const Message = styled.span`
+  position: absolute;
+  top: 48px;
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;

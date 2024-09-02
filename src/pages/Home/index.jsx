@@ -28,12 +28,13 @@ import AlertMessage from "../../components/AlertMessage";
 import Header from "../../components/Header";
 import searchPng from "./search-interface.png";
 import bannerPng from "./banner.jpg";
+import JourneyCreator from "./JourneyCreator";
 import bannerPng2 from "./banner2.jpg";
 
 const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(""); //
   const [filteredSearch, setFilteredSearch] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
@@ -42,6 +43,7 @@ const Home = () => {
   const [selectedDocName, setSelectedDocName] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertKey, setAlertKey] = useState(0);
+  const [showJourneyCreator, setShowJourneyCreator] = useState(false);
 
   const {
     data,
@@ -62,13 +64,15 @@ const Home = () => {
     if (status === "success" && data) {
       const allDocs = data.pages.flatMap((page) => page.journeys);
 
+      // 確保 search 是字串
+      const searchStr = typeof search === "string" ? search.toLowerCase() : "";
+
       const filtered = allDocs.filter((journeyDoc) => {
         return (
-          journeyDoc.title.toLowerCase().includes(search.toLowerCase()) ||
-          journeyDoc.description.toLowerCase().includes(search.toLowerCase())
+          journeyDoc.title.toLowerCase().includes(searchStr) ||
+          journeyDoc.description.toLowerCase().includes(searchStr)
         );
       });
-
       const journeyTimesData = {};
       const unsubscribeList = [];
 
@@ -191,7 +195,6 @@ const Home = () => {
         hasNextPage &&
         !isFetchingNextPage
       ) {
-        console.log("Fetching next page...");
         fetchNextPage();
       }
     };
@@ -212,21 +215,35 @@ const Home = () => {
   if (authError || error)
     return <p>獲取用戶文檔時出錯: {authError?.message || error.message}</p>;
 
+  const toggleJourneyCreator = () => {
+    setShowJourneyCreator(!showJourneyCreator);
+  };
+
   return (
     <>
-      <Header onSearchChange={handleSearchChange} />
+      <Header
+        onSearchChange={handleSearchChange}
+        onCreateJourney={toggleJourneyCreator}
+        isCreatingJourney={showJourneyCreator}
+      />
+      {showJourneyCreator && (
+        <JourneyCreator onClose={() => setShowJourneyCreator(false)} />
+      )}
       <Container>
         <BannerContainer></BannerContainer>
         <SearchContainer>
           <SearchImg src={searchPng} />
-          <SearchInput placeholder="搜尋行程" onChange={handleSearchChange} />
+          <SearchInput
+            placeholder="搜尋行程"
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
         </SearchContainer>
         <GridContainer>
           {filteredSearch.map((doc) => (
             <CardContainer
               key={doc.id}
               onClick={() => handleCardClick(doc.id)}
-              backgroundImage={
+              backgroundimage={
                 doc.journey &&
                 doc.journey.length > 0 &&
                 doc.journey[0].photos &&
@@ -264,13 +281,12 @@ const Home = () => {
               />
             </CardContainer>
           ))}
-
-          {isFetchingNextPage && (
-            <LoaderWrapper>
-              <RingLoader color="#57c2e9" />
-            </LoaderWrapper>
-          )}
         </GridContainer>
+        {isFetchingNextPage && (
+          <LoaderWrapper>
+            <RingLoader color="#57c2e9" />
+          </LoaderWrapper>
+        )}
         <ConfirmDialog
           open={open}
           onClose={handleCloseDialog}
@@ -298,7 +314,7 @@ const Home = () => {
 
 const Container = styled.div`
   height: 120vh;
-  overflow-y: auto;
+  overflow-y: cover;
   margin-top: 80px;
 `;
 
@@ -396,7 +412,7 @@ const CardContainer = styled.div`
   position: relative;
   height: 250px;
   width: 100%;
-  background-image: url(${(props) => props.backgroundImage || defaultImg});
+  background-image: url(${(props) => props.backgroundimage});
   background-size: cover;
   background-position: center;
   border-radius: 13px;

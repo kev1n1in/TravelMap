@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import searchImg from "./search-interface.png";
 
-const Header = ({ onSearchChange }) => {
+const Header = ({ onSearchChange, onCreateJourney, isCreatingJourney }) => {
   const navigate = useNavigate();
   const [opacity, setOpacity] = useState(1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -33,14 +33,18 @@ const Header = ({ onSearchChange }) => {
   };
 
   const handleSearchChange = (event) => {
-    setSearch(event.target.value);
-    onSearchChange(event.target.value);
+    if (!event || !event.target || typeof event.target.value === "undefined") {
+      return;
+    }
+    const value = event.target.value || "";
+    setSearch(value);
+    onSearchChange(value);
   };
 
   return (
     <HeaderWrapper opacity={opacity}>
       <LogoText>Time to Travel</LogoText>
-      <SearchContainer isSearchOpen={isSearchOpen}>
+      <SearchContainer>
         {isSearchOpen ? (
           <>
             <SearchInput
@@ -49,7 +53,7 @@ const Header = ({ onSearchChange }) => {
               value={search}
               onChange={handleSearchChange}
               autoFocus
-              isSearchOpen={isSearchOpen}
+              $isSearchOpen={isSearchOpen}
             />
             <SearchImg src={searchImg} onClick={handleSearchToggle} />
           </>
@@ -58,8 +62,8 @@ const Header = ({ onSearchChange }) => {
         )}
       </SearchContainer>
       <IconWrapper>
-        <CreateJourneyButton onClick={() => navigate("/journey")}>
-          新增行程
+        <CreateJourneyButton onClick={onCreateJourney}>
+          {isCreatingJourney ? "關閉選單" : "新增行程"}
         </CreateJourneyButton>
         <Logout onClick={() => navigate("/")}>登出</Logout>
       </IconWrapper>
@@ -69,6 +73,8 @@ const Header = ({ onSearchChange }) => {
 
 Header.propTypes = {
   onSearchChange: PropTypes.func.isRequired,
+  onCreateJourney: PropTypes.func.isRequired,
+  isCreatingJourney: PropTypes.bool.isRequired,
 };
 
 const HeaderWrapper = styled.header`
@@ -140,7 +146,7 @@ const SearchContainer = styled.div`
   display: none;
   position: relative;
   margin-right: 10px;
-  width: ${({ isSearchOpen }) => (isSearchOpen ? "50%" : "24px")};
+  width: ${({ $isSearchOpen }) => ($isSearchOpen ? "50%" : "24px")};
   transition: width 0.3s ease;
   justify-content: flex-end;
   align-items: center;
@@ -152,7 +158,7 @@ const SearchContainer = styled.div`
 `;
 
 const SearchInput = styled.input`
-  width: ${({ isSearchOpen }) => (isSearchOpen ? "80%" : "0")};
+  width: ${({ $isSearchOpen }) => ($isSearchOpen ? "80%" : "0")};
   padding: 10px;
   font-size: 16px;
   border: 1px solid #ccc;
@@ -162,7 +168,8 @@ const SearchInput = styled.input`
   transition: width 0.3s ease;
   position: absolute;
   right: 0;
-  opacity: ${({ isSearchOpen }) => (isSearchOpen ? 1 : 0)};
+  opacity: ${({ $isSearchOpen }) => ($isSearchOpen ? 1 : 0)};
+  visibility: ${({ $isSearchOpen }) => ($isSearchOpen ? "visible" : "hidden")};
 `;
 
 const SearchImg = styled.img`

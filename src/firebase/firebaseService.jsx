@@ -19,7 +19,7 @@ import dayjs from "dayjs";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { getAuth } from "firebase/auth";
 
-export const createNewJourney = async (title, description, navigate) => {
+export const createNewJourney = async (title, description) => {
   try {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -44,7 +44,7 @@ export const createNewJourney = async (title, description, navigate) => {
       createdAt: new Date().toISOString(),
       updatedAt: serverTimestamp(),
     });
-    navigate(`/journey/${newDocRef.id}`);
+    return newDocRef.id;
   } catch (error) {
     console.error("Error creating journey document:", error);
   }
