@@ -17,10 +17,10 @@ import weekday from "dayjs/plugin/weekday";
 import localeData from "dayjs/plugin/localeData";
 import "dayjs/locale/zh-tw";
 import clockImg from "./img/clock.png";
-import AlertMessage from "../../components/AlertMessage";
 import travelGif from "./img/travelImg.png";
 import homeImg from "./img/home.png";
-import useConfirmDialog from "../../hooks/useConfirmDialog";
+import useConfirmDialog from "../../Hooks/useConfirmDialog";
+import useAlert from "../../Hooks/useAlertMessage";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -40,15 +40,13 @@ const JourneyList = ({
     title: "",
     description: "",
   });
-  const [alertMessage, setAlertMessage] = useState("");
+  const { addAlert, AlertMessage } = useAlert();
   const { ConfirmDialogComponent, openDialog } = useConfirmDialog();
-
   const formatDate = (dateStr) => {
     const date = dayjs(dateStr);
     const weekdayName = date.format("dddd");
     return `${date.format("MM/DD")} ${weekdayName}`;
   };
-
   const groupJourneyByDate = (data) => {
     return data.reduce((groups, item) => {
       const { date } = item;
@@ -81,12 +79,12 @@ const JourneyList = ({
         ? saveJourneyInfo(journeyId, title, description)
         : createNewJourney(title, description, navigate),
     onSuccess: () => {
-      setAlertMessage(journeyId ? "行程已成功保存！" : "行程創建成功！");
+      addAlert(journeyId ? "行程已成功保存！" : "行程創建成功！");
       setNewJourney({ title: "", description: "" });
       handleWindowReload();
     },
     onError: () => {
-      setAlertMessage("操作行程時出現錯誤");
+      addAlert("操作行程時出現錯誤");
     },
   });
 
@@ -125,17 +123,15 @@ const JourneyList = ({
   const handleDeleteJourney = () => {
     openDialog(newJourney.title, () => {
       deleteJourney(journeyId);
-      setAlertMessage("行程已成功刪除！");
+      addAlert("行程已成功刪除！");
       navigate("/home");
     });
   };
 
   const handleDeletePlace = (journey, event) => {
     event.stopPropagation();
-    console.log("journey", journey);
     openDialog(journey.name, () => {
       onDelete(journeyId, journey.place_id);
-      setAlertMessage("景點已成功刪除！");
     });
   };
 
@@ -250,9 +246,7 @@ const JourneyList = ({
             </>
           )}
         </ContentWrapper>
-        {alertMessage && (
-          <AlertMessage message={alertMessage} severity="success" />
-        )}
+        <AlertMessage />
         {ConfirmDialogComponent}
       </ListWrapper>
     </>

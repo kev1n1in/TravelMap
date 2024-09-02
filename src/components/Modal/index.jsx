@@ -12,7 +12,7 @@ import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
 import Rating from "@mui/material/Rating";
 import Switch from "@mui/material/Switch";
-import useConfirmDialog from "../../hooks/useConfirmDialog";
+import useConfirmDialog from "../../Hooks/useConfirmDialog";
 
 const Modal = ({
   placeDetails,
@@ -403,6 +403,7 @@ const StyledTimePicker = styled(TimePicker)`
 const Message = styled.span`
   position: absolute;
   top: 48px;
+  font-size: 10px;
   @media (max-width: 768px) {
     display: none;
   }

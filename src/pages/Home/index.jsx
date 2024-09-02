@@ -20,31 +20,27 @@ import {
   doc as firestoreDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import defaultImg from "./default-img.jpg";
-import trashPng from "./delete.png";
+import defaultImg from "./img/default-img.jpg";
+import trashPng from "./img/delete.png";
 import { motion } from "framer-motion";
-import ConfirmDialog from "../../components/ConfirmDialog";
-import AlertMessage from "../../components/AlertMessage";
+import useAlert from "../../Hooks/useAlertMessage";
 import Header from "../../components/Header";
-import searchPng from "./search-interface.png";
-import bannerPng from "./banner.jpg";
+import searchPng from "./img/search-interface.png";
+import bannerPng from "./img/banner.jpg";
 import JourneyCreator from "./JourneyCreator";
-import bannerPng2 from "./banner2.jpg";
+import bannerPng2 from "./img/banner2.jpg";
+import useConfirmDialog from "../../Hooks/useConfirmDialog";
 
 const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
   const navigate = useNavigate();
-  const [search, setSearch] = useState(""); //
+  const [search, setSearch] = useState("");
   const [filteredSearch, setFilteredSearch] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState(null);
   const [journeyTimes, setJourneyTimes] = useState({});
   const queryClient = useQueryClient();
-  const [selectedDocName, setSelectedDocName] = useState("");
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertKey, setAlertKey] = useState(0);
   const [showJourneyCreator, setShowJourneyCreator] = useState(false);
-
+  const { ConfirmDialogComponent, openDialog } = useConfirmDialog();
+  const { addAlert, AlertMessage } = useAlert();
   const {
     data,
     fetchNextPage,
@@ -64,9 +60,7 @@ const Home = () => {
     if (status === "success" && data) {
       const allDocs = data.pages.flatMap((page) => page.journeys);
 
-      // 確保 search 是字串
       const searchStr = typeof search === "string" ? search.toLowerCase() : "";
-
       const filtered = allDocs.filter((journeyDoc) => {
         return (
           journeyDoc.title.toLowerCase().includes(searchStr) ||
@@ -147,42 +141,25 @@ const Home = () => {
     setSearch(value);
   };
 
-  const showMessage = (msg) => {
-    setAlertMessage(msg);
-    setAlertKey(Date.now());
-  };
-
   const deleteMutation = useMutation({
     mutationFn: deleteJourney,
     onSuccess: () => {
-      showMessage("行程刪除成功！");
+      addAlert("行程刪除成功！");
       queryClient.invalidateQueries(["userJourneys", user?.uid]);
-      handleCloseDialog();
     },
     onError: () => {
-      showMessage("刪除行程時出現錯誤");
+      addAlert("刪除行程時出現錯誤");
     },
   });
 
-  const handleOpenDialog = (docId, docName) => {
-    setSelectedDoc(docId);
-    setSelectedDocName(docName);
-    setOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpen(false);
-  };
-
-  const handleConfirmDelete = () => {
-    if (selectedDoc) {
-      deleteMutation.mutate(selectedDoc);
-    }
+  const handleDeleteJourney = (JourneyId, JourneyName) => {
+    openDialog(JourneyName, () => {
+      deleteMutation.mutate(JourneyId);
+    });
   };
 
   const handleCardClick = (id) => {
     navigate(`/journey/${id}`);
-    setOpen(false);
   };
 
   useEffect(() => {
@@ -225,6 +202,8 @@ const Home = () => {
         onSearchChange={handleSearchChange}
         onCreateJourney={toggleJourneyCreator}
         isCreatingJourney={showJourneyCreator}
+        search={search}
+        setSearch={setSearch}
       />
       {showJourneyCreator && (
         <JourneyCreator onClose={() => setShowJourneyCreator(false)} />
@@ -272,7 +251,7 @@ const Home = () => {
               <RemoveImg
                 onClick={(event) => {
                   event.stopPropagation();
-                  handleOpenDialog(doc.id, doc.title);
+                  handleDeleteJourney(doc.id, doc.title);
                 }}
                 src={trashPng}
                 alt="刪除"
@@ -287,26 +266,8 @@ const Home = () => {
             <RingLoader color="#57c2e9" />
           </LoaderWrapper>
         )}
-        <ConfirmDialog
-          open={open}
-          onClose={handleCloseDialog}
-          onConfirm={handleConfirmDelete}
-          title="確認刪除"
-          contentText={
-            <span>
-              您確定要刪除{" "}
-              <span style={{ color: "#d02c2c" }}>{selectedDocName}</span> 嗎？
-              此操作無法撤銷。
-            </span>
-          }
-          confirmButtonText="確定刪除"
-          cancelButtonText="取消"
-          confirmButtonColor="secondary"
-        />
-
-        {alertMessage && (
-          <AlertMessage message={alertMessage} keyProp={alertKey} />
-        )}
+        {ConfirmDialogComponent}
+        <AlertMessage />
       </Container>
     </>
   );

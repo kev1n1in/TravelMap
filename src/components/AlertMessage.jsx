@@ -1,6 +1,16 @@
-import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import PropTypes from "prop-types";
+
+const AlertMessage = ({ message }) => {
+  if (!message) return null;
+  return <AlertContainer>{message}</AlertContainer>;
+};
+
+AlertMessage.propTypes = {
+  message: PropTypes.string.isRequired,
+};
+
+export default AlertMessage;
 
 const slideIn = keyframes`
   0% {
@@ -39,30 +49,3 @@ const AlertContainer = styled.div`
   font-weight: bold;
   animation: ${slideIn} 0.5s ease-out, ${slideOut} 0.5s ease-in 1.5s forwards;
 `;
-
-const AlertMessage = ({ message, duration = 2000 }) => {
-  const [visible, setVisible] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState("");
-
-  useEffect(() => {
-    if (message && typeof message === "string" && message.length > 0) {
-      setCurrentMessage(message);
-      setVisible(true);
-
-      const hideTimer = setTimeout(() => {
-        setVisible(false);
-      }, duration);
-
-      return () => clearTimeout(hideTimer);
-    }
-  }, [message, duration]);
-
-  return visible && <AlertContainer>{currentMessage}</AlertContainer>;
-};
-
-AlertMessage.propTypes = {
-  message: PropTypes.string.isRequired,
-  duration: PropTypes.number,
-};
-
-export default AlertMessage;

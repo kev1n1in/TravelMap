@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import styled from "styled-components";
 import "dayjs/locale/zh-tw";
-import JourneyImg from "./creator.png";
+import JourneyImg from "./img/creator.png";
+import useAlert from "../../Hooks/useAlertMessage";
 
 const JourneyCreator = () => {
   const navigate = useNavigate();
@@ -12,16 +13,16 @@ const JourneyCreator = () => {
     title: "",
     description: "",
   });
-
+  const { addAlert, AlertMessage } = useAlert();
   const createMutation = useMutation({
     mutationFn: ({ title, description }) =>
       createNewJourney(title, description),
     onSuccess: (docId) => {
-      alert("行程創建成功！");
+      addAlert("行程創建成功！");
       navigate(`/journey/${docId}`);
     },
     onError: (error) => {
-      alert(`操作行程時出現錯誤: ${error.message}`);
+      addAlert(`操作行程時出現錯誤: ${error.message}`);
     },
   });
 
@@ -36,7 +37,7 @@ const JourneyCreator = () => {
         description: newJourney.description,
       });
     } else {
-      alert("請填寫所有必要的字段");
+      addAlert("請填寫所有必要的字段");
     }
   };
 
@@ -58,6 +59,7 @@ const JourneyCreator = () => {
       <StyledButton onClick={handleSubmit} disabled={createMutation.isLoading}>
         創建行程
       </StyledButton>
+      <AlertMessage />
     </Container>
   );
 };
@@ -87,7 +89,6 @@ const JourneyTitleInput = styled.input`
   padding: 10px;
   background: #fff;
   border: 2px solid #ccc;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   outline: none;
   transition: border-color 0.3s;
@@ -107,7 +108,6 @@ const JourneyDescriptionInput = styled.textarea`
   padding: 10px;
   background: #fff;
   border: 2px solid #ccc;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   outline: none;
   transition: border-color 0.3s;

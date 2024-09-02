@@ -10,9 +10,9 @@ import SearchImg from "../SingleJourney/img/search.png";
 import JourneyList from "./JourneyList";
 import dayjs from "dayjs";
 import {
-  modalReducer,
+  journeyReducer,
   initialState,
-  modalActionTypes,
+  actionTypes,
 } from "../../utils/journeyReducer";
 import { useParams } from "react-router-dom";
 import {
@@ -22,28 +22,25 @@ import {
 } from "../../firebase/firebaseService";
 import Map from "./Map";
 import { RingLoader } from "react-spinners";
-import AlertMessage from "../../components/AlertMessage";
-
+import useAlert from "../../Hooks/useAlertMessage";
 const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
 
 const SingleJourney = () => {
-  const [state, dispatch] = useReducer(modalReducer, initialState);
+  const [state, dispatch] = useReducer(journeyReducer, initialState);
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(null);
   const [tripDate, setTripDate] = useState(dayjs());
   const [tripStartTime, setTripStartTime] = useState(
     dayjs().set("hour", 14).startOf("hour")
   );
-  const [polylinePath, setPolylinePath] = useState([]);
-  const [sortedJourney, setSortedJourney] = useState([]);
-  const [alertMessages, setAlertMessages] = useState([]);
   const [isStreetView, setIsStreetView] = useState(false);
   const [isCardsVisible, setIsCardsVisible] = useState("");
   const { id: journeyId } = useParams();
   const queryClient = useQueryClient();
   const formattedTripDate = tripDate.format("YYYY-MM-DD");
   const formattedTripStartTime = tripStartTime.format("HH:mm");
+  const { addAlert, AlertMessage } = useAlert();
 
   useEffect(() => {
     const handleResize = () => {
@@ -110,19 +107,19 @@ const SingleJourney = () => {
       const dateB = new Date(`${b.date} ${b.startTime}`);
       return dateA - dateB;
     });
-    setSortedJourney(sorted);
+    dispatch({ type: actionTypes.SET_SORTED_JOURNEY, payload: sorted });
   }, [isFetched, journeyData]);
 
   useEffect(() => {
-    if (!Array.isArray(sortedJourney)) {
+    if (!Array.isArray(state.sortedJourney)) {
       return;
     }
-    const path = sortedJourney.map((journey) => ({
+    const path = state.sortedJourney.map((journey) => ({
       lat: journey.lat,
       lng: journey.lng,
     }));
-    setPolylinePath(path);
-  }, [sortedJourney]);
+    dispatch({ type: actionTypes.SET_POLYLINE_PATH, payload: path });
+  }, [state.sortedJourney]);
 
   const { data: places, refetch: refetchPlace } = useQuery({
     queryKey: ["places", center],
@@ -162,26 +159,26 @@ const SingleJourney = () => {
 
   const handleMarkerClick = (data, isJourney) => {
     if (!journeyId) {
-      setAlertMessages((prev) => [...prev, "請先填寫行程名稱和描述"]);
+      addAlert("請先填寫行程名稱和描述");
       return;
     }
     const modalType = isJourney ? "update" : "create";
     dispatch({
-      type: modalActionTypes.OPEN_MODAL,
+      type: actionTypes.OPEN_MODAL,
       payload: { modalType, data: data },
     });
   };
 
   const handleCardClick = (data) => {
     if (!journeyId) {
-      setAlertMessages((prev) => [...prev, "請先填寫行程名稱和描述"]);
+      addAlert("請先填寫行程名稱和描述");
       return;
     }
     if (map) {
       map.setCenter({ lat: data.lat, lng: data.lng });
     }
     dispatch({
-      type: modalActionTypes.OPEN_MODAL,
+      type: actionTypes.OPEN_MODAL,
       payload: { modalType: "update", data: data },
     });
   };
@@ -205,18 +202,18 @@ const SingleJourney = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
-      dispatch({ type: modalActionTypes.CLOSE_MODAL });
-      setAlertMessages((prev) => [...prev, "建立行程成功！"]);
+      dispatch({ type: actionTypes.CLOSE_MODAL });
+      addAlert("建立行程成功！");
     },
     onError: (error) => {
-      setAlertMessages((prev) => [...prev, "建立行程失敗，請重試"]);
+      addAlert("建立行程失敗，請重試");
       console.error("Error:", error);
     },
   });
 
   const handleCreate = () => {
     if (!tripDate || !tripStartTime) {
-      setAlertMessages((prev) => [...prev, "請選擇日期和時間"]);
+      addAlert("請選擇日期和時間");
       return;
     }
     const isDuplicate = checkDuplicateDate(
@@ -225,10 +222,7 @@ const SingleJourney = () => {
       formattedTripStartTime
     );
     if (isDuplicate) {
-      setAlertMessages((prev) => [
-        ...prev,
-        "此時間已經有行程安排，請選擇其他時間",
-      ]);
+      addAlert("此時間已經有行程安排，請選擇其他時間");
       return;
     }
 
@@ -251,18 +245,18 @@ const SingleJourney = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
-      dispatch({ type: modalActionTypes.CLOSE_MODAL });
-      setAlertMessages((prev) => [...prev, "更新行程成功！"]);
+      dispatch({ type: actionTypes.CLOSE_MODAL });
+      addAlert("更新行程成功！");
     },
     onError: (error) => {
-      setAlertMessages((prev) => [...prev, "更新行程失敗，請重試"]);
+      addAlert("更新行程失敗，請重試");
       console.log("Error", error);
     },
   });
 
   const handleUpdate = () => {
     if (!tripDate || !tripStartTime) {
-      setAlertMessages((prev) => [...prev, "請選擇日期和時間"]);
+      addAlert("請選擇日期和時間");
       return;
     }
     const isDuplicate = checkDuplicateDate(
@@ -271,10 +265,7 @@ const SingleJourney = () => {
       formattedTripStartTime
     );
     if (isDuplicate) {
-      setAlertMessages((prev) => [
-        ...prev,
-        "此時間已經有行程安排，請選擇其他時間",
-      ]);
+      addAlert("此時間已經有行程安排，請選擇其他時間");
       return;
     }
     updateMutation.mutate({
@@ -291,11 +282,11 @@ const SingleJourney = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
-      dispatch({ type: modalActionTypes.CLOSE_MODAL });
-      setAlertMessages((prev) => [...prev, "刪除行程成功！"]);
+      dispatch({ type: actionTypes.CLOSE_MODAL });
+      addAlert("刪除行程成功！");
     },
     onError: (error) => {
-      setAlertMessages((prev) => [...prev, "刪除行程失敗，請重試"]);
+      addAlert("刪除行程失敗，請重試");
       console.log("Error", error);
     },
   });
@@ -313,7 +304,6 @@ const SingleJourney = () => {
   };
 
   const toggleCardsVisibility = () => {
-    if (window.innerWidth > 768) return;
     setIsCardsVisible(!isCardsVisible);
   };
 
@@ -329,12 +319,12 @@ const SingleJourney = () => {
       <MapContainer>
         <Map
           onUnmount={handleMapUnmount}
-          polylinePath={polylinePath}
+          polylinePath={state.polylinePath}
           center={center}
           places={places}
           journeyData={journeyData}
           onClickMarker={handleMarkerClick}
-          sortedJourney={sortedJourney}
+          sortedJourney={state.sortedJourney}
           onMapLoad={handleMapLoad}
         />
         <SearchButton onClick={handleSearchClick}>
@@ -345,11 +335,11 @@ const SingleJourney = () => {
       {state.isModalOpen && (
         <>
           {isStreetView ? (
-            <StreetViewModal
+            <Modal
               journeyId={journeyId}
               placeDetails={placeDetails}
               modalType={state.modalType}
-              onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
+              onClose={() => dispatch({ type: actionTypes.CLOSE_MODAL })}
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               onCreate={handleCreate}
@@ -361,11 +351,11 @@ const SingleJourney = () => {
               isStreetView={isStreetView}
             />
           ) : (
-            <Modal
+            <StreetViewModal
               journeyId={journeyId}
               placeDetails={placeDetails}
               modalType={state.modalType}
-              onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
+              onClose={() => dispatch({ type: actionTypes.CLOSE_MODAL })}
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               onCreate={handleCreate}
@@ -389,7 +379,7 @@ const SingleJourney = () => {
             onUpdate={handleUpdate}
             onClickCard={handleCardClick}
             onDelete={handleDelete}
-            sortedJourney={sortedJourney}
+            sortedJourney={state.sortedJourney}
             placeId={placeDetails?.place_id}
           />
         </CardsContainer>
@@ -397,9 +387,7 @@ const SingleJourney = () => {
       <ToggleButton onClick={toggleCardsVisibility}>
         {isCardsVisible ? "隱藏行程列表" : "顯示行程列表"}
       </ToggleButton>
-      {alertMessages?.map((message, index) => (
-        <AlertMessage key={index} message={message} severity="success" />
-      ))}
+      <AlertMessage />
     </Container>
   );
 };
