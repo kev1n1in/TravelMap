@@ -4,11 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import searchImg from "./search-interface.png";
 
-const Header = ({ onSearchChange }) => {
+const Header = ({ onSearchChange, search, setSearch }) => {
   const navigate = useNavigate();
   const [opacity, setOpacity] = useState(1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,6 +68,8 @@ const Header = ({ onSearchChange }) => {
 
 Header.propTypes = {
   onSearchChange: PropTypes.func.isRequired,
+  search: PropTypes.string,
+  setSearch: PropTypes.func,
 };
 
 const HeaderWrapper = styled.header`
@@ -138,14 +139,13 @@ const Logout = styled.div`
 
 const SearchContainer = styled.div`
   display: none;
-  position: relative;
-  margin-right: 10px;
-  width: ${({ isSearchOpen }) => (isSearchOpen ? "50%" : "24px")};
-  transition: width 0.3s ease;
-  justify-content: flex-end;
-  align-items: center;
-
   @media (max-width: 768px) {
+    position: relative;
+    margin-right: 10px;
+    width: ${({ isSearchOpen }) => (isSearchOpen ? "50%" : "24px")};
+    transition: width 0.3s ease;
+    justify-content: flex-end;
+    align-items: center;
     display: flex;
     flex-grow: 1;
   }
