@@ -61,7 +61,7 @@ const Header = ({ onSearchChange }) => {
         <CreateJourneyButton onClick={() => navigate("/journey")}>
           新增行程
         </CreateJourneyButton>
-        <Logout onClick={() => navigate("/")}>Logout</Logout>
+        <Logout onClick={() => navigate("/")}>登出</Logout>
       </IconWrapper>
     </HeaderWrapper>
   );
@@ -125,10 +125,10 @@ const CreateJourneyButton = styled.div`
 `;
 
 const Logout = styled.div`
-  font-family: "Seaweed Script", cursive;
-  font-size: 25px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   cursor: pointer;
+  color: #57c2e9;
   transition: transform 0.3s ease;
 
   &:hover {

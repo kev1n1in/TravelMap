@@ -182,15 +182,15 @@ const JourneyList = ({
             onChange={handleInputChange}
           />
           <ActionButtonWrapper>
-            <DeleteJourneyButton onClick={handleDeleteJourney}>
-              刪除行程
-            </DeleteJourneyButton>
             <StyledButton
               onClick={handleCreateOrSaveJourneyClick}
               disabled={createMutation.isLoading}
             >
               {journeyId ? "保存行程" : "創建行程"}
             </StyledButton>
+            <DeleteJourneyButton onClick={handleDeleteJourney}>
+              刪除行程
+            </DeleteJourneyButton>
           </ActionButtonWrapper>
         </TypeWrapper>
         <ContentWrapper>
@@ -327,7 +327,7 @@ const ListWrapper = styled.div`
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 5px 15px;
+    padding: 15px 30px;
   }
 `;
 
@@ -355,7 +355,7 @@ const TitleWrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px 10px 20px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 2px -2px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
     padding: 10px 15px;
@@ -368,7 +368,7 @@ const ButtonGroup = styled.div`
 `;
 
 const ButtonBase = styled.button`
-  background-color: #3498db;
+  background-color: #57c2e9;
   color: white;
   border: none;
   border-radius: 4px;
@@ -378,7 +378,7 @@ const ButtonBase = styled.button`
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #2980b9;
+    transform: scale(1.1);
   }
 
   &:disabled {
@@ -388,12 +388,10 @@ const ButtonBase = styled.button`
 `;
 
 const DeleteJourneyButton = styled(ButtonBase)`
-  background-color: #e74c3c;
+  background-color: #bdc3c7;
+
   &:hover {
-    background-color: #c0392b;
-  }
-  @media (max-width: 768px) {
-    font-size: 14px;
+    transform: scale(1.1);
   }
 `;
 
@@ -401,48 +399,48 @@ const StyledButton = styled(ButtonBase)``;
 
 const Title = styled.h2`
   font-size: 26px;
-  color: rgb(30, 159, 210);
-  font-weight: 700;
+  color: #57c2e9;
+  font-weight: 800;
   text-shadow: 2px 2px 4px rgba(214, 212, 212, 0.642);
 `;
 
 const JourneyTitleInput = styled.input`
-  width: 100%;
-
+  width: 90%;
   margin-top: 16px;
   font-size: 24px;
   border: none;
-  border-bottom: 2px solid #ccc;
-  border-radius: 0; /* 移除圓角 */
+  border-bottom: 2px solid rgba(204, 204, 204, 0.7);
+  border-radius: 0;
   font-weight: 500;
-
+  padding: 12px;
+  outline: none;
+  resize: none;
   @media (max-width: 768px) {
     font-size: 20px;
   }
 
   &:focus {
-    border-bottom: 2px solid #000; /* 聚焦時改變底部邊框顏色 */
+    border-bottom: 2px solid #919191;
   }
 `;
 
 const JourneyDescriptionInput = styled.textarea`
-  width: 100%;
-  height: 40px;
-  padding: 16px 0 0 0; /* 調整 padding */
-  margin: 12px 0 0px 0;
+  width: 90%;
+  height: 50px;
+  padding: 12px 12px 12px 12px;
   font-size: 20px;
   border: none;
-  border-bottom: 2px solid #ccc; /* 增加底部邊框 */
+  border-bottom: 2px solid rgba(204, 204, 204, 0.7);
   resize: none;
   outline: none;
 
   @media (max-width: 768px) {
     font-size: 18px;
-    padding: 12px 0 0 0; /* 調整 padding */
+    padding: 12px 0 0 0;
   }
 
   &:focus {
-    border-bottom: 2px solid #000; /* 聚焦時改變底部邊框顏色 */
+    border-bottom: 2px solid #919191;
   }
 `;
 
@@ -450,11 +448,11 @@ const ContentWrapper = styled.div`
   height: calc(100vh - 320px);
   margin-top: 16px;
   overflow-y: auto;
-  padding: 10px; /* 增加 padding 以確保陰影顯示 */
+  padding: 10px;
 
   @media (max-width: 768px) {
     height: calc(100vh - 260px);
-    padding: 8px; /* 為小螢幕設置較小的 padding */
+    padding: 8px;
   }
 `;
 
@@ -510,13 +508,9 @@ const JourneyContent = styled.div`
 
 const JourneyTitle = styled.h3`
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 18px;
   font-weight: bold;
   color: #333;
-
-  @media (max-width: 768px) {
-    font-size: 1.1rem;
-  }
 `;
 
 const JourneyTime = styled.p`
@@ -565,6 +559,10 @@ const HomeButton = styled.img`
   width: 36px;
   height: 36px;
   cursor: pointer;
+
+  &:hover {
+    transform: scale(1.1);
+  }
 
   @media (max-width: 768px) {
     right: 15px;

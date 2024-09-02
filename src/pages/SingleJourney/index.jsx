@@ -3,7 +3,7 @@ import { useCallback, useEffect, useReducer, useState } from "react";
 import { fetchPlaces, fetchPlaceDetails } from "../../utils/mapApi";
 import { fetchAttractions } from "../../firebase/firebaseService";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import Modal from "./Modal";
+import Modal from "../../components/Modal";
 import StreetViewModal from "./StreetViewModal";
 import styled from "styled-components";
 import SearchImg from "../SingleJourney/img/search.png";
@@ -164,9 +164,6 @@ const SingleJourney = () => {
     if (!journeyId) {
       setAlertMessages((prev) => [...prev, "請先填寫行程名稱和描述"]);
       return;
-    }
-    if (map) {
-      map.setCenter({ lat: data.lat, lng: data.lng });
     }
     const modalType = isJourney ? "update" : "create";
     dispatch({
@@ -344,44 +341,44 @@ const SingleJourney = () => {
           <SearchIcon src={SearchImg} />
           搜尋此區域景點
         </SearchButton>
-        {state.isModalOpen && (
-          <>
-            {isStreetView ? (
-              <StreetViewModal
-                journeyId={journeyId}
-                placeDetails={placeDetails}
-                modalType={state.modalType}
-                onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                onCreate={handleCreate}
-                onChangeDate={handleDateChange}
-                onChangeTime={handleTimeChange}
-                tripDate={tripDate}
-                tripStartTime={tripStartTime}
-                toggleView={toggleView}
-                isStreetView={isStreetView}
-              />
-            ) : (
-              <Modal
-                journeyId={journeyId}
-                placeDetails={placeDetails}
-                modalType={state.modalType}
-                onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                onCreate={handleCreate}
-                onChangeDate={handleDateChange}
-                onChangeTime={handleTimeChange}
-                tripDate={tripDate}
-                tripStartTime={tripStartTime}
-                toggleView={toggleView}
-                isStreetView={isStreetView}
-              />
-            )}
-          </>
-        )}
       </MapContainer>
+      {state.isModalOpen && (
+        <>
+          {isStreetView ? (
+            <StreetViewModal
+              journeyId={journeyId}
+              placeDetails={placeDetails}
+              modalType={state.modalType}
+              onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
+              onDelete={handleDelete}
+              onUpdate={handleUpdate}
+              onCreate={handleCreate}
+              onChangeDate={handleDateChange}
+              onChangeTime={handleTimeChange}
+              tripDate={tripDate}
+              tripStartTime={tripStartTime}
+              toggleView={toggleView}
+              isStreetView={isStreetView}
+            />
+          ) : (
+            <Modal
+              journeyId={journeyId}
+              placeDetails={placeDetails}
+              modalType={state.modalType}
+              onClose={() => dispatch({ type: modalActionTypes.CLOSE_MODAL })}
+              onDelete={handleDelete}
+              onUpdate={handleUpdate}
+              onCreate={handleCreate}
+              onChangeDate={handleDateChange}
+              onChangeTime={handleTimeChange}
+              tripDate={tripDate}
+              tripStartTime={tripStartTime}
+              toggleView={toggleView}
+              isStreetView={isStreetView}
+            />
+          )}
+        </>
+      )}
       {isCardsVisible && (
         <CardsContainer>
           <JourneyList
@@ -457,15 +454,16 @@ const ToggleButton = styled.button`
   top: 10px;
   right: 60px;
   padding: 10px 20px;
-  background-color: #2d4057;
+  background-color: #57c2e9;
   color: white;
   border: none;
   border-radius: 20px;
   cursor: pointer;
   z-index: 3;
-
+  font-weight: 600;
+  font-size: 14px;
   @media (min-width: 769px) {
-    display: none; /* 在寬度大於768px時隱藏按鈕 */
+    display: none;
   }
 `;
 
@@ -489,6 +487,10 @@ const SearchButton = styled.button`
   transition: transform 0.3s ease-in-out;
   &:hover {
     transform: translateX(-50%) scale(1.1);
+  }
+
+  @media (min-width: 769px) {
+    top: 50px;
   }
 `;
 
