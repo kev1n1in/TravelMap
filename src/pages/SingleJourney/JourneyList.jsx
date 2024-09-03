@@ -17,10 +17,11 @@ import weekday from "dayjs/plugin/weekday";
 import localeData from "dayjs/plugin/localeData";
 import "dayjs/locale/zh-tw";
 import clockImg from "./img/clock.png";
-import ConfirmDialog from "../../components/ConfirmDialog";
-import AlertMessage from "../../components/AlertMessage";
-import travelGif from "./img/travelImg.png";
 import homeImg from "./img/home.png";
+import useConfirmDialog from "../../Hooks/useConfirmDialog";
+import useAlert from "../../Hooks/useAlertMessage";
+import { RingLoader } from "react-spinners";
+import travelGif from "./img/travelImg.png";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -30,7 +31,6 @@ dayjs.locale("zh-tw");
 const JourneyList = ({
   journeyId,
   isLoading,
-  error,
   onClickCard,
   sortedJourney,
   onDelete,
@@ -40,51 +40,13 @@ const JourneyList = ({
     title: "",
     description: "",
   });
-  const [open, setOpen] = useState(false);
-  const [dialogType, setDialogType] = useState("");
-  const [selectedJourney, setSelectedJourney] = useState(null);
-  const [alertMessage, setAlertMessage] = useState("");
-
-  const handleOpenDialog = (journey, type) => {
-    setSelectedJourney(journey);
-    setDialogType(type);
-    setOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpen(false);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (selectedJourney) {
-      try {
-        if (dialogType === "journey") {
-          await deleteJourney(selectedJourney.id);
-          setAlertMessage("行程已成功刪除！");
-          navigate("/home");
-        } else if (dialogType === "place") {
-          onDelete(journeyId, selectedJourney.place_id);
-          setAlertMessage("地點已成功刪除！");
-        }
-      } catch (error) {
-        setAlertMessage("刪除時出現錯誤");
-        console.log(error.message);
-      } finally {
-        setOpen(false);
-      }
-    }
-  };
-
-  const handleDeleteJourney = () => {
-    handleOpenDialog({ id: journeyId, name: newJourney.title }, "journey");
-  };
-
+  const { addAlert, AlertMessage } = useAlert();
+  const { ConfirmDialogComponent, openDialog } = useConfirmDialog();
   const formatDate = (dateStr) => {
     const date = dayjs(dateStr);
     const weekdayName = date.format("dddd");
     return `${date.format("MM/DD")} ${weekdayName}`;
   };
-
   const groupJourneyByDate = (data) => {
     return data.reduce((groups, item) => {
       const { date } = item;
@@ -97,7 +59,6 @@ const JourneyList = ({
   };
 
   const groupedData = groupJourneyByDate(sortedJourney);
-
   const calculateTimeDifference = (startTime1, startTime2) => {
     const time1 = dayjs(startTime1, "HH:mm");
     const time2 = dayjs(startTime2, "HH:mm");
@@ -118,12 +79,12 @@ const JourneyList = ({
         ? saveJourneyInfo(journeyId, title, description)
         : createNewJourney(title, description, navigate),
     onSuccess: () => {
-      setAlertMessage(journeyId ? "行程已成功保存！" : "行程創建成功！");
+      addAlert(journeyId ? "行程已成功保存！" : "行程創建成功！");
       setNewJourney({ title: "", description: "" });
       handleWindowReload();
     },
     onError: () => {
-      setAlertMessage("操作行程時出現錯誤");
+      addAlert("操作行程時出現錯誤");
     },
   });
 
@@ -159,6 +120,21 @@ const JourneyList = ({
     navigate("/home");
   };
 
+  const handleDeleteJourney = () => {
+    openDialog(newJourney.title, () => {
+      deleteJourney(journeyId);
+      addAlert("行程已成功刪除！");
+      navigate("/home");
+    });
+  };
+
+  const handleDeletePlace = (journey, event) => {
+    event.stopPropagation();
+    openDialog(journey.name, () => {
+      onDelete(journeyId, journey.place_id);
+    });
+  };
+
   return (
     <>
       <TitleWrapper>
@@ -188,16 +164,20 @@ const JourneyList = ({
             >
               {journeyId ? "保存行程" : "創建行程"}
             </StyledButton>
-            <DeleteJourneyButton onClick={handleDeleteJourney}>
+            <DeleteJourneyButton
+              onClick={() => {
+                handleDeleteJourney();
+              }}
+            >
               刪除行程
             </DeleteJourneyButton>
           </ActionButtonWrapper>
         </TypeWrapper>
         <ContentWrapper>
           {isLoading ? (
-            <Message>加載中...</Message>
-          ) : error ? (
-            <Message>Oops: {error.message}</Message>
+            <LoaderWrapper>
+              <RingLoader color="#57c2e9" />
+            </LoaderWrapper>
           ) : groupedData && Object.keys(groupedData).length > 0 ? (
             Object.keys(groupedData).map((date) => (
               <JourneyDateSection key={date}>
@@ -236,10 +216,9 @@ const JourneyList = ({
                             <JourneyTime>{journey.startTime || ""}</JourneyTime>
                           </TimeContainer>
                           <RemoveButton
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleOpenDialog(journey, "place");
-                            }}
+                            onClick={(event) =>
+                              handleDeletePlace(journey, event)
+                            }
                             whileHover={{ scale: 1.2 }}
                             whileTap={{ scale: 0.8 }}
                           >
@@ -262,32 +241,13 @@ const JourneyList = ({
               </JourneyDateSection>
             ))
           ) : (
-            <>
+            <TravelImgWrapper>
               <TravelImg src={travelGif} />
-            </>
+            </TravelImgWrapper>
           )}
         </ContentWrapper>
-        {alertMessage && (
-          <AlertMessage message={alertMessage} severity="success" />
-        )}
-        <ConfirmDialog
-          open={open}
-          onClose={handleCloseDialog}
-          onConfirm={handleConfirmDelete}
-          title={dialogType === "journey" ? "確認刪除行程" : "確認刪除地點"}
-          contentText={
-            <span>
-              您確定要刪除{" "}
-              <span style={{ color: "#57c2e9", fontWeight: "600" }}>
-                {selectedJourney?.name}
-              </span>{" "}
-              嗎？此操作無法撤銷。
-            </span>
-          }
-          confirmButtonText="確定刪除"
-          cancelButtonText="取消"
-          confirmButtonColor="warning"
-        />
+        <AlertMessage />
+        {ConfirmDialogComponent}
       </ListWrapper>
     </>
   );
@@ -304,9 +264,7 @@ JourneyList.propTypes = {
     })
   ),
   isLoading: PropTypes.bool.isRequired,
-  error: PropTypes.shape({
-    message: PropTypes.string,
-  }),
+
   journeyId: PropTypes.string,
   onClickCard: PropTypes.func,
   sortedJourney: PropTypes.arrayOf(
@@ -319,6 +277,13 @@ JourneyList.propTypes = {
   onDelete: PropTypes.func.isRequired,
 };
 
+const LoaderWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+`;
+
 const ListWrapper = styled.div`
   width: 100%;
   min-width: 270px;
@@ -328,6 +293,16 @@ const ListWrapper = styled.div`
   @media (max-width: 768px) {
     padding: 15px 30px;
   }
+`;
+
+const TravelImgWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
+const TravelImg = styled.img`
+  width: 250px;
+  height: 250px;
 `;
 
 const TypeWrapper = styled.div`
@@ -446,8 +421,7 @@ const JourneyDescriptionInput = styled.textarea`
 const ContentWrapper = styled.div`
   height: calc(100vh - 320px);
   margin-top: 16px;
-  overflow-y: auto;
-
+  overflow-y: cover;
   @media (max-width: 768px) {
     height: calc(100vh - 260px);
     padding: 8px;
@@ -567,18 +541,6 @@ const HomeButton = styled.img`
     width: 30px;
     height: 30px;
   }
-`;
-
-const TravelImg = styled.img`
-  height: 220px;
-  margin-top: 48px;
-  width: auto;
-`;
-
-const Message = styled.p`
-  text-align: center;
-  font-size: 2rem;
-  color: #333;
 `;
 
 const JourneyLabel = styled.div`

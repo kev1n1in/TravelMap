@@ -17,7 +17,6 @@ export const fetchPlaces = (mapInstance, center) => {
           return { ...place, isOpenNow };
         });
         resolve(processedResults);
-        console.log("processedResults", processedResults);
       } else {
         reject(status);
       }
@@ -31,7 +30,6 @@ export const fetchPlaceDetails = (map, placeId) => {
     service.getDetails({ placeId, language: "zh-TW" }, (result, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
         resolve(result);
-        console.log("Place details:", result);
       } else {
         reject(status);
       }

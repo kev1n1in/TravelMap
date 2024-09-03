@@ -10,9 +10,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
-import ConfirmDialog from "../../components/ConfirmDialog";
 import Rating from "@mui/material/Rating";
 import Switch from "@mui/material/Switch";
+import useConfirmDialog from "../../Hooks/useConfirmDialog";
 
 const Modal = ({
   placeDetails,
@@ -31,7 +31,7 @@ const Modal = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoUrls, setPhotoUrls] = useState([]);
-  const [openDialog, setOpenDialog] = useState(false);
+  const { ConfirmDialogComponent, openDialog } = useConfirmDialog();
   useEffect(() => {
     if (placeDetails && placeDetails.photos) {
       const urls = placeDetails.photos
@@ -52,19 +52,13 @@ const Modal = ({
     );
   };
 
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
-  const handleConfirmDelete = () => {
-    if (onDelete) {
-      onDelete(journeyId);
-      setOpenDialog(false);
+  const openDeleteDialog = () => {
+    if (!placeDetails || !journeyId) {
+      return;
     }
+    openDialog(placeDetails.name, () => {
+      onDelete(journeyId);
+    });
   };
 
   if (!placeDetails) return null;
@@ -137,31 +131,14 @@ const Modal = ({
             ) : (
               <ButtonWrapper>
                 <ModalButton onClick={onUpdate}>更新行程時間</ModalButton>
-                <ModalButton onClick={handleOpenDialog}>刪除此地標</ModalButton>
+                <ModalButton onClick={openDeleteDialog}>刪除此地標</ModalButton>
               </ButtonWrapper>
             )}
             <Message>街景模式僅在桌機版可使用</Message>
           </ModalFooter>
         </InfoContainer>
       </ModalContainer>
-      <ConfirmDialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        onConfirm={handleConfirmDelete}
-        title="確認刪除"
-        contentText={
-          <span>
-            您確定要刪除{" "}
-            <span style={{ color: "#57c2e9", fontWeight: "500" }}>
-              {placeDetails.name}
-            </span>{" "}
-            嗎？ 此操作無法撤銷。
-          </span>
-        }
-        confirmButtonText="確定刪除"
-        cancelButtonText="取消"
-        confirmButtonColor="error"
-      />
+      {ConfirmDialogComponent}
     </ModalOverlay>
   );
   return ReactDOM.createPortal(
@@ -426,6 +403,7 @@ const StyledTimePicker = styled(TimePicker)`
 const Message = styled.span`
   position: absolute;
   top: 48px;
+  font-size: 10px;
   @media (max-width: 768px) {
     display: none;
   }

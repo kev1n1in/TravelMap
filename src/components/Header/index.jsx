@@ -4,11 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import searchImg from "./search-interface.png";
 
-const Header = ({ onSearchChange, onCreateJourney, isCreatingJourney }) => {
+const Header = ({
+  onSearchChange,
+  onCreateJourney,
+  isCreatingJourney,
+  search,
+  setSearch,
+}) => {
   const navigate = useNavigate();
   const [opacity, setOpacity] = useState(1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,14 +21,11 @@ const Header = ({ onSearchChange, onCreateJourney, isCreatingJourney }) => {
       const newOpacity = Math.max(1 - scrollTop / 200, 0.7);
       setOpacity(newOpacity);
     };
-
     window.addEventListener("scroll", handleScroll);
-
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
-
   const handleSearchToggle = () => {
     setIsSearchOpen(!isSearchOpen);
     if (!isSearchOpen) {
@@ -33,6 +35,8 @@ const Header = ({ onSearchChange, onCreateJourney, isCreatingJourney }) => {
   };
 
   const handleSearchChange = (event) => {
+    setSearch(event.target.value);
+    onSearchChange(event.target.value);
     if (!event || !event.target || typeof event.target.value === "undefined") {
       return;
     }
@@ -75,6 +79,8 @@ Header.propTypes = {
   onSearchChange: PropTypes.func.isRequired,
   onCreateJourney: PropTypes.func.isRequired,
   isCreatingJourney: PropTypes.bool.isRequired,
+  search: PropTypes.string,
+  setSearch: PropTypes.func,
 };
 
 const HeaderWrapper = styled.header`
@@ -91,7 +97,6 @@ const HeaderWrapper = styled.header`
   height: 80px;
   z-index: 1000;
 `;
-
 const LogoText = styled.div`
   font-family: "Seaweed Script", cursive;
   font-size: 40px;
@@ -100,14 +105,12 @@ const LogoText = styled.div`
     font-size: 30px;
   }
 `;
-
 const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 20px;
   padding-right: 20px;
 `;
-
 const CreateJourneyButton = styled.div`
   color: white;
   padding: 10px;
@@ -118,39 +121,34 @@ const CreateJourneyButton = styled.div`
   border-radius: 30px;
   text-align: center;
   cursor: pointer;
-
   &:hover {
     transform: scale(1.1);
   }
-
   @media (max-width: 768px) {
     position: fixed;
     right: 20px;
     bottom: 20px;
   }
 `;
-
 const Logout = styled.div`
   font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   color: #57c2e9;
   transition: transform 0.3s ease;
-
   &:hover {
     transform: scale(1.2);
   }
 `;
-
 const SearchContainer = styled.div`
   display: none;
   position: relative;
   margin-right: 10px;
+  width: ${({ isSearchOpen }) => (isSearchOpen ? "50%" : "24px")};
   width: ${({ $isSearchOpen }) => ($isSearchOpen ? "50%" : "24px")};
   transition: width 0.3s ease;
   justify-content: flex-end;
   align-items: center;
-
   @media (max-width: 768px) {
     display: flex;
     flex-grow: 1;
@@ -158,6 +156,7 @@ const SearchContainer = styled.div`
 `;
 
 const SearchInput = styled.input`
+  width: ${({ isSearchOpen }) => (isSearchOpen ? "80%" : "0")};
   width: ${({ $isSearchOpen }) => ($isSearchOpen ? "80%" : "0")};
   padding: 10px;
   font-size: 16px;
@@ -168,6 +167,7 @@ const SearchInput = styled.input`
   transition: width 0.3s ease;
   position: absolute;
   right: 0;
+  opacity: ${({ isSearchOpen }) => (isSearchOpen ? 1 : 0)};
   opacity: ${({ $isSearchOpen }) => ($isSearchOpen ? 1 : 0)};
   visibility: ${({ $isSearchOpen }) => ($isSearchOpen ? "visible" : "hidden")};
 `;
