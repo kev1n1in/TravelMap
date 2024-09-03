@@ -28,7 +28,7 @@ import Header from "../../components/Header";
 import searchPng from "./img/search-interface.png";
 import bannerPng from "./img/banner.jpg";
 import JourneyCreator from "./JourneyCreator";
-import bannerPng2 from "./img/banner2.jpg";
+import bannerMobile from "./img/banner-mobile.jpg";
 import useConfirmDialog from "../../Hooks/useConfirmDialog";
 
 const Home = () => {
@@ -186,7 +186,7 @@ const Home = () => {
   if (loading)
     return (
       <LoaderWrapper>
-        <RingLoader color="#57c2e9" />
+        <RingLoader color="#57c2e9" size={100} />
       </LoaderWrapper>
     );
   if (authError || error)
@@ -262,9 +262,9 @@ const Home = () => {
           ))}
         </GridContainer>
         {isFetchingNextPage && (
-          <LoaderWrapper>
-            <RingLoader color="#57c2e9" />
-          </LoaderWrapper>
+          <LoaderScrollWrapper>
+            <RingLoader color="#57c2e9" size={150} />
+          </LoaderScrollWrapper>
         )}
         {ConfirmDialogComponent}
         <AlertMessage />
@@ -292,7 +292,7 @@ const BannerContainer = styled.div`
 
   @media (max-width: 768px) {
     height: 250px;
-    background-image: url(${bannerPng2});
+    background-image: url(${bannerMobile});
 
     &::after {
       content: "";
@@ -383,6 +383,13 @@ const CardContainer = styled.div`
 `;
 
 const LoaderWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+`;
+
+const LoaderScrollWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;

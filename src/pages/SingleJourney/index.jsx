@@ -45,7 +45,9 @@ const SingleJourney = () => {
   useEffect(() => {
     const handleResize = () => {
       setIsCardsVisible(window.innerWidth > 768);
-      setIsStreetView(window.innerWidth > 768);
+      if (window.innerWidth <= 768) {
+        setIsStreetView(false);
+      }
     };
 
     window.addEventListener("resize", handleResize);
@@ -299,18 +301,18 @@ const SingleJourney = () => {
     });
   };
 
-  const toggleView = () => {
-    setIsStreetView(!isStreetView);
+  const handleToggleView = () => {
+    setIsStreetView((prev) => !prev);
   };
 
-  const toggleCardsVisibility = () => {
-    setIsCardsVisible(!isCardsVisible);
+  const handleCardsVisibility = () => {
+    setIsCardsVisible((prev) => !prev);
   };
 
   if (!isLoaded)
     return (
       <LoaderWrapper>
-        <RingLoader color="#57c2e9" />
+        <RingLoader color="#57c2e9" size={100} />
       </LoaderWrapper>
     );
 
@@ -335,22 +337,6 @@ const SingleJourney = () => {
       {state.isModalOpen && (
         <>
           {isStreetView ? (
-            <Modal
-              journeyId={journeyId}
-              placeDetails={placeDetails}
-              modalType={state.modalType}
-              onClose={() => dispatch({ type: actionTypes.CLOSE_MODAL })}
-              onDelete={handleDelete}
-              onUpdate={handleUpdate}
-              onCreate={handleCreate}
-              onChangeDate={handleDateChange}
-              onChangeTime={handleTimeChange}
-              tripDate={tripDate}
-              tripStartTime={tripStartTime}
-              toggleView={toggleView}
-              isStreetView={isStreetView}
-            />
-          ) : (
             <StreetViewModal
               journeyId={journeyId}
               placeDetails={placeDetails}
@@ -363,7 +349,23 @@ const SingleJourney = () => {
               onChangeTime={handleTimeChange}
               tripDate={tripDate}
               tripStartTime={tripStartTime}
-              toggleView={toggleView}
+              toggleView={handleToggleView}
+              isStreetView={isStreetView}
+            />
+          ) : (
+            <Modal
+              journeyId={journeyId}
+              placeDetails={placeDetails}
+              modalType={state.modalType}
+              onClose={() => dispatch({ type: actionTypes.CLOSE_MODAL })}
+              onDelete={handleDelete}
+              onUpdate={handleUpdate}
+              onCreate={handleCreate}
+              onChangeDate={handleDateChange}
+              onChangeTime={handleTimeChange}
+              tripDate={tripDate}
+              tripStartTime={tripStartTime}
+              toggleView={handleToggleView}
               isStreetView={isStreetView}
             />
           )}
@@ -384,7 +386,7 @@ const SingleJourney = () => {
           />
         </CardsContainer>
       )}
-      <ToggleButton onClick={toggleCardsVisibility}>
+      <ToggleButton onClick={handleCardsVisibility}>
         {isCardsVisible ? "隱藏行程列表" : "顯示行程列表"}
       </ToggleButton>
       <AlertMessage />
@@ -398,7 +400,7 @@ const LoaderWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  height: 100vh;
 `;
 
 const Container = styled.div`

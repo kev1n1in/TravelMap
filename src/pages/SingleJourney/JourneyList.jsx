@@ -17,10 +17,11 @@ import weekday from "dayjs/plugin/weekday";
 import localeData from "dayjs/plugin/localeData";
 import "dayjs/locale/zh-tw";
 import clockImg from "./img/clock.png";
-import travelGif from "./img/travelImg.png";
 import homeImg from "./img/home.png";
 import useConfirmDialog from "../../Hooks/useConfirmDialog";
 import useAlert from "../../Hooks/useAlertMessage";
+import { RingLoader } from "react-spinners";
+import travelGif from "./img/travelImg.png";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -30,7 +31,6 @@ dayjs.locale("zh-tw");
 const JourneyList = ({
   journeyId,
   isLoading,
-  error,
   onClickCard,
   sortedJourney,
   onDelete,
@@ -175,9 +175,9 @@ const JourneyList = ({
         </TypeWrapper>
         <ContentWrapper>
           {isLoading ? (
-            <Message>加載中...</Message>
-          ) : error ? (
-            <Message>Oops: {error.message}</Message>
+            <LoaderWrapper>
+              <RingLoader color="#57c2e9" />
+            </LoaderWrapper>
           ) : groupedData && Object.keys(groupedData).length > 0 ? (
             Object.keys(groupedData).map((date) => (
               <JourneyDateSection key={date}>
@@ -241,9 +241,9 @@ const JourneyList = ({
               </JourneyDateSection>
             ))
           ) : (
-            <>
+            <TravelImgWrapper>
               <TravelImg src={travelGif} />
-            </>
+            </TravelImgWrapper>
           )}
         </ContentWrapper>
         <AlertMessage />
@@ -264,9 +264,7 @@ JourneyList.propTypes = {
     })
   ),
   isLoading: PropTypes.bool.isRequired,
-  error: PropTypes.shape({
-    message: PropTypes.string,
-  }),
+
   journeyId: PropTypes.string,
   onClickCard: PropTypes.func,
   sortedJourney: PropTypes.arrayOf(
@@ -279,6 +277,13 @@ JourneyList.propTypes = {
   onDelete: PropTypes.func.isRequired,
 };
 
+const LoaderWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+`;
+
 const ListWrapper = styled.div`
   width: 100%;
   min-width: 270px;
@@ -288,6 +293,16 @@ const ListWrapper = styled.div`
   @media (max-width: 768px) {
     padding: 15px 30px;
   }
+`;
+
+const TravelImgWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
+const TravelImg = styled.img`
+  width: 250px;
+  height: 250px;
 `;
 
 const TypeWrapper = styled.div`
@@ -406,8 +421,7 @@ const JourneyDescriptionInput = styled.textarea`
 const ContentWrapper = styled.div`
   height: calc(100vh - 320px);
   margin-top: 16px;
-  overflow-y: auto;
-
+  overflow-y: cover;
   @media (max-width: 768px) {
     height: calc(100vh - 260px);
     padding: 8px;
@@ -527,18 +541,6 @@ const HomeButton = styled.img`
     width: 30px;
     height: 30px;
   }
-`;
-
-const TravelImg = styled.img`
-  height: 220px;
-  margin-top: 48px;
-  width: auto;
-`;
-
-const Message = styled.p`
-  text-align: center;
-  font-size: 2rem;
-  color: #333;
 `;
 
 const JourneyLabel = styled.div`
