@@ -47,6 +47,7 @@ const SingleJourney = () => {
         setIsStreetView(false);
       }
     };
+
     window.addEventListener("resize", handleResize);
     handleResize();
 

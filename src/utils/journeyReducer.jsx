@@ -2,12 +2,10 @@ export const initialState = {
   isModalOpen: false,
   modalType: null,
   journeyData: null,
-  // polylinePath: [],
   sortedJourney: [],
 };
 
 export const actionTypes = {
-  // SET_POLYLINE_PATH: "SET_POLYLINE_PATH",
   SET_SORTED_JOURNEY: "SET_SORTED_JOURNEY",
   OPEN_MODAL: "OPEN_MODAL",
   CLOSE_MODAL: "CLOSE_MODAL",
@@ -15,11 +13,6 @@ export const actionTypes = {
 
 export const journeyReducer = (state, action) => {
   switch (action.type) {
-    // case actionTypes.SET_POLYLINE_PATH:
-    //   return {
-    //     ...state,
-    //     polylinePath: action.payload,
-    //   };
     case actionTypes.SET_SORTED_JOURNEY:
       return {
         ...state,
