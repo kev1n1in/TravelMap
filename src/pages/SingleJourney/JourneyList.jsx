@@ -357,7 +357,8 @@ const ActionButtonWrapper = styled.div`
 `;
 
 const TitleWrapper = styled.div`
-  width: 300px;
+  /* width: 300px; */
+  width: 100%;
   background-color: #fff;
   height: 60px;
   display: flex;

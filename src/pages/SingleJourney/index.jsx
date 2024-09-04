@@ -22,8 +22,7 @@ import {
 } from "../../firebase/firebaseService";
 import Map from "./Map";
 import { RingLoader } from "react-spinners";
-import AlertMessage from "../../components/AlertMessage";
-
+import useAlert from "../../Hooks/useAlertMessage";
 const API_KEY = import.meta.env.VITE_APP_GOOGLE_MAPS_API_KEY;
 const libraries = ["places"];
 
@@ -32,18 +31,14 @@ const SingleJourney = () => {
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(null);
   const [tripDate, setTripDate] = useState(dayjs());
-  const [tripStartTime, setTripStartTime] = useState(
-    dayjs().set("hour", 14).startOf("hour")
-  );
-  const [polylinePath, setPolylinePath] = useState([]);
-  const [sortedJourney, setSortedJourney] = useState([]);
-  const [alertMessages, setAlertMessages] = useState([]);
+  const [tripStartTime, setTripStartTime] = useState(dayjs().startOf("hour"));
   const [isStreetView, setIsStreetView] = useState(false);
   const [isCardsVisible, setIsCardsVisible] = useState("");
   const { id: journeyId } = useParams();
   const queryClient = useQueryClient();
   const formattedTripDate = tripDate.format("YYYY-MM-DD");
   const formattedTripStartTime = tripStartTime.format("HH:mm");
+  const { addAlert, AlertMessage } = useAlert();
 
   useEffect(() => {
     const handleResize = () => {
@@ -112,19 +107,13 @@ const SingleJourney = () => {
       const dateB = new Date(`${b.date} ${b.startTime}`);
       return dateA - dateB;
     });
-    setSortedJourney(sorted);
+    dispatch({ type: actionTypes.SET_SORTED_JOURNEY, payload: sorted });
   }, [isFetched, journeyData]);
 
-  useEffect(() => {
-    if (!Array.isArray(sortedJourney)) {
-      return;
-    }
-    const path = sortedJourney.map((journey) => ({
-      lat: journey.lat,
-      lng: journey.lng,
-    }));
-    setPolylinePath(path);
-  }, [sortedJourney]);
+  const polylinePath = state.sortedJourney?.map((journey) => ({
+    lat: journey.lat,
+    lng: journey.lng,
+  }));
 
   const { data: places, refetch: refetchPlace } = useQuery({
     queryKey: ["places", center],
@@ -135,8 +124,8 @@ const SingleJourney = () => {
   });
 
   const { data: placeDetails } = useQuery({
-    queryKey: ["placeDetails", state.jourenyData?.place_id],
-    queryFn: () => fetchPlaceDetails(map, state.jourenyData.place_id),
+    queryKey: ["placeDetails", state.journeyData?.place_id],
+    queryFn: () => fetchPlaceDetails(map, state.journeyData.place_id),
     enabled: !!state.isModalOpen,
     staleTime: 1000 * 60 * 5,
     retry: false,
@@ -164,10 +153,14 @@ const SingleJourney = () => {
 
   const handleMarkerClick = (data, isJourney) => {
     if (!journeyId) {
-      setAlertMessages((prev) => [...prev, "請先填寫行程名稱和描述"]);
+      addAlert("請先填寫行程名稱和描述");
       return;
     }
     const modalType = isJourney ? "update" : "create";
+    if (modalType === "update") {
+      setTripDate(dayjs(data.date));
+      setTripStartTime(dayjs(data.startTime, "HH:mm"));
+    }
     dispatch({
       type: actionTypes.OPEN_MODAL,
       payload: { modalType, data: data },
@@ -176,12 +169,14 @@ const SingleJourney = () => {
 
   const handleCardClick = (data) => {
     if (!journeyId) {
-      setAlertMessages((prev) => [...prev, "請先填寫行程名稱和描述"]);
+      addAlert("請先填寫行程名稱和描述");
       return;
     }
     if (map) {
       map.setCenter({ lat: data.lat, lng: data.lng });
     }
+    setTripDate(dayjs(data.date));
+    setTripStartTime(dayjs(data.startTime, "HH:mm"));
     dispatch({
       type: actionTypes.OPEN_MODAL,
       payload: { modalType: "update", data: data },
@@ -208,17 +203,17 @@ const SingleJourney = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
       dispatch({ type: actionTypes.CLOSE_MODAL });
-      setAlertMessages((prev) => [...prev, "建立行程成功！"]);
+      addAlert("建立行程成功！");
     },
     onError: (error) => {
-      setAlertMessages((prev) => [...prev, "建立行程失敗，請重試"]);
+      addAlert("建立行程失敗，請重試");
       console.error("Error:", error);
     },
   });
 
   const handleCreate = () => {
     if (!tripDate || !tripStartTime) {
-      setAlertMessages((prev) => [...prev, "請選擇日期和時間"]);
+      addAlert("請選擇日期和時間");
       return;
     }
     const isDuplicate = checkDuplicateDate(
@@ -227,10 +222,7 @@ const SingleJourney = () => {
       formattedTripStartTime
     );
     if (isDuplicate) {
-      setAlertMessages((prev) => [
-        ...prev,
-        "此時間已經有行程安排，請選擇其他時間",
-      ]);
+      addAlert("此時間已經有行程安排，請選擇其他時間");
       return;
     }
 
@@ -254,17 +246,17 @@ const SingleJourney = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
       dispatch({ type: actionTypes.CLOSE_MODAL });
-      setAlertMessages((prev) => [...prev, "更新行程成功！"]);
+      addAlert("更新行程成功！");
     },
     onError: (error) => {
-      setAlertMessages((prev) => [...prev, "更新行程失敗，請重試"]);
+      addAlert("更新行程失敗，請重試");
       console.log("Error", error);
     },
   });
 
   const handleUpdate = () => {
     if (!tripDate || !tripStartTime) {
-      setAlertMessages((prev) => [...prev, "請選擇日期和時間"]);
+      addAlert("請選擇日期和時間");
       return;
     }
     const isDuplicate = checkDuplicateDate(
@@ -273,10 +265,7 @@ const SingleJourney = () => {
       formattedTripStartTime
     );
     if (isDuplicate) {
-      setAlertMessages((prev) => [
-        ...prev,
-        "此時間已經有行程安排，請選擇其他時間",
-      ]);
+      addAlert("此時間已經有行程安排，請選擇其他時間");
       return;
     }
     updateMutation.mutate({
@@ -294,10 +283,10 @@ const SingleJourney = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(["journeys", journeyId]);
       dispatch({ type: actionTypes.CLOSE_MODAL });
-      setAlertMessages((prev) => [...prev, "刪除行程成功！"]);
+      addAlert("刪除行程成功！");
     },
     onError: (error) => {
-      setAlertMessages((prev) => [...prev, "刪除行程失敗，請重試"]);
+      addAlert("刪除行程失敗，請重試");
       console.log("Error", error);
     },
   });
@@ -310,19 +299,19 @@ const SingleJourney = () => {
     });
   };
 
-  const toggleView = () => {
-    setIsStreetView(!isStreetView);
+  const handleToggleView = () => {
+    setIsStreetView((prev) => !prev);
   };
 
-  const toggleCardsVisibility = () => {
+  const handleCardsVisibility = () => {
     if (window.innerWidth > 768) return;
-    setIsCardsVisible(!isCardsVisible);
+    setIsCardsVisible((prev) => !prev);
   };
 
   if (!isLoaded)
     return (
       <LoaderWrapper>
-        <RingLoader color="#57c2e9" />
+        <RingLoader color="#57c2e9" size={100} />
       </LoaderWrapper>
     );
 
@@ -334,9 +323,8 @@ const SingleJourney = () => {
           polylinePath={polylinePath}
           center={center}
           places={places}
-          journeyData={journeyData}
           onClickMarker={handleMarkerClick}
-          sortedJourney={sortedJourney}
+          sortedJourney={state.sortedJourney}
           onMapLoad={handleMapLoad}
         />
         <SearchButton onClick={handleSearchClick}>
@@ -359,7 +347,7 @@ const SingleJourney = () => {
               onChangeTime={handleTimeChange}
               tripDate={tripDate}
               tripStartTime={tripStartTime}
-              toggleView={toggleView}
+              toggleView={handleToggleView}
               isStreetView={isStreetView}
             />
           ) : (
@@ -375,7 +363,7 @@ const SingleJourney = () => {
               onChangeTime={handleTimeChange}
               tripDate={tripDate}
               tripStartTime={tripStartTime}
-              toggleView={toggleView}
+              toggleView={handleToggleView}
               isStreetView={isStreetView}
             />
           )}
@@ -391,17 +379,15 @@ const SingleJourney = () => {
             onUpdate={handleUpdate}
             onClickCard={handleCardClick}
             onDelete={handleDelete}
-            sortedJourney={sortedJourney}
+            sortedJourney={state.sortedJourney}
             placeId={placeDetails?.place_id}
           />
         </CardsContainer>
       )}
-      <ToggleButton onClick={toggleCardsVisibility}>
+      <ToggleButton onClick={handleCardsVisibility}>
         {isCardsVisible ? "隱藏行程列表" : "顯示行程列表"}
       </ToggleButton>
-      {alertMessages?.map((message, index) => (
-        <AlertMessage key={index} message={message} severity="success" />
-      ))}
+      <AlertMessage />
     </Container>
   );
 };
@@ -412,7 +398,7 @@ const LoaderWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  height: 100vh;
 `;
 
 const Container = styled.div`
@@ -453,9 +439,8 @@ const CardsContainer = styled.div`
 
 const ToggleButton = styled.button`
   position: absolute;
-  display: none;
   top: 10px;
-  right: 60px;
+  right: 100px;
   padding: 10px 20px;
   background-color: #57c2e9;
   color: white;
@@ -465,9 +450,8 @@ const ToggleButton = styled.button`
   z-index: 3;
   font-weight: 600;
   font-size: 14px;
-  @media (max-width: 769px) {
-    display: flex;
-    right: 100px;
+  @media (min-width: 769px) {
+    display: none;
   }
 `;
 
