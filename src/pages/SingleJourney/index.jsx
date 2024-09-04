@@ -42,10 +42,10 @@ const SingleJourney = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsCardsVisible(window.innerWidth > 768);
-      if (window.innerWidth <= 768) {
-        setIsStreetView(false);
+      if (window.innerWidth > 768) {
+        setIsCardsVisible(true);
       }
+      setIsStreetView(window.innerWidth > 768);
     };
 
     window.addEventListener("resize", handleResize);
@@ -304,6 +304,7 @@ const SingleJourney = () => {
   };
 
   const handleCardsVisibility = () => {
+    if (window.innerWidth > 768) return;
     setIsCardsVisible((prev) => !prev);
   };
 
@@ -439,7 +440,7 @@ const CardsContainer = styled.div`
 const ToggleButton = styled.button`
   position: absolute;
   top: 10px;
-  right: 60px;
+  right: 100px;
   padding: 10px 20px;
   background-color: #57c2e9;
   color: white;

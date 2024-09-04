@@ -22,6 +22,7 @@ import useConfirmDialog from "../../Hooks/useConfirmDialog";
 import useAlert from "../../Hooks/useAlertMessage";
 import { RingLoader } from "react-spinners";
 import travelGif from "./img/travelImg.png";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 dayjs.extend(duration);
 dayjs.extend(weekday);
@@ -42,11 +43,14 @@ const JourneyList = ({
   });
   const { addAlert, AlertMessage } = useAlert();
   const { ConfirmDialogComponent, openDialog } = useConfirmDialog();
+  const queryClient = useQueryClient();
+
   const formatDate = (dateStr) => {
     const date = dayjs(dateStr);
     const weekdayName = date.format("dddd");
     return `${date.format("MM/DD")} ${weekdayName}`;
   };
+
   const groupJourneyByDate = (data) => {
     return data.reduce((groups, item) => {
       const { date } = item;
@@ -59,6 +63,7 @@ const JourneyList = ({
   };
 
   const groupedData = groupJourneyByDate(sortedJourney);
+
   const calculateTimeDifference = (startTime1, startTime2) => {
     const time1 = dayjs(startTime1, "HH:mm");
     const time2 = dayjs(startTime2, "HH:mm");
@@ -81,7 +86,7 @@ const JourneyList = ({
     onSuccess: () => {
       addAlert(journeyId ? "行程已成功保存！" : "行程創建成功！");
       setNewJourney({ title: "", description: "" });
-      handleWindowReload();
+      queryClient.invalidateQueries(["fetchJourney", journeyId]);
     },
     onError: () => {
       addAlert("操作行程時出現錯誤");
@@ -102,20 +107,21 @@ const JourneyList = ({
   const handleInputChange = (e) => {
     setNewJourney({ ...newJourney, [e.target.name]: e.target.value });
   };
+  const { data: journeyData } = useQuery({
+    queryKey: ["fetchJourney", journeyId],
+    queryFn: () => fetchJourneyInfo(journeyId),
+    enabled: !!journeyId,
+  });
 
   useEffect(() => {
-    if (journeyId) {
-      const fetchJourneyData = async () => {
-        const data = await fetchJourneyInfo(journeyId);
-        setNewJourney({ title: data.title, description: data.description });
-      };
-      fetchJourneyData();
+    if (journeyData) {
+      setNewJourney({
+        title: journeyData.title,
+        description: journeyData.description,
+      });
     }
-  }, [journeyId]);
+  }, [journeyData]);
 
-  const handleWindowReload = () => {
-    window.location.reload();
-  };
   const handleBackHome = () => {
     navigate("/home");
   };
@@ -136,14 +142,15 @@ const JourneyList = ({
   };
 
   return (
-    <>
-      <TitleWrapper>
-        <Title>行程列表</Title>
-        <ButtonGroup>
-          <HomeButton onClick={handleBackHome} src={homeImg} />
-        </ButtonGroup>
-      </TitleWrapper>
-      <ListWrapper>
+    <Container>
+      <Header>
+        {" "}
+        <TitleWrapper>
+          <Title>行程列表</Title>
+          <ButtonGroup>
+            <HomeButton onClick={handleBackHome} src={homeImg} />
+          </ButtonGroup>
+        </TitleWrapper>
         <TypeWrapper>
           <JourneyTitleInput
             placeholder="行程名稱"
@@ -157,22 +164,25 @@ const JourneyList = ({
             value={newJourney.description}
             onChange={handleInputChange}
           />
-          <ActionButtonWrapper>
-            <StyledButton
-              onClick={handleCreateOrSaveJourneyClick}
-              disabled={createMutation.isLoading}
-            >
-              {journeyId ? "保存行程" : "創建行程"}
-            </StyledButton>
-            <DeleteJourneyButton
-              onClick={() => {
-                handleDeleteJourney();
-              }}
-            >
-              刪除行程
-            </DeleteJourneyButton>
-          </ActionButtonWrapper>
         </TypeWrapper>
+        <ActionButtonWrapper>
+          <StyledButton
+            onClick={handleCreateOrSaveJourneyClick}
+            disabled={createMutation.isLoading}
+          >
+            {journeyId ? "保存行程" : "創建行程"}
+          </StyledButton>
+          <DeleteJourneyButton
+            onClick={() => {
+              handleDeleteJourney();
+            }}
+          >
+            刪除行程
+          </DeleteJourneyButton>
+        </ActionButtonWrapper>
+      </Header>
+
+      <ListWrapper>
         <ContentWrapper>
           {isLoading ? (
             <LoaderWrapper>
@@ -249,7 +259,7 @@ const JourneyList = ({
         <AlertMessage />
         {ConfirmDialogComponent}
       </ListWrapper>
-    </>
+    </Container>
   );
 };
 
@@ -276,7 +286,23 @@ JourneyList.propTypes = {
   ),
   onDelete: PropTypes.func.isRequired,
 };
+const Container = styled.div`
+  max-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
 
+const Header = styled.div`
+  position: fixed;
+  z-index: 3;
+  background-color: #fff;
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
 const LoaderWrapper = styled.div`
   display: flex;
   justify-content: center;
@@ -287,7 +313,7 @@ const LoaderWrapper = styled.div`
 const ListWrapper = styled.div`
   width: 100%;
   min-width: 270px;
-  padding: 5px 25px 10px 25px;
+  padding: 75px 25px 10px 25px;
   box-sizing: border-box;
 
   @media (max-width: 768px) {
@@ -306,23 +332,32 @@ const TravelImg = styled.img`
 `;
 
 const TypeWrapper = styled.div`
-  margin-bottom: 64px;
-  position: relative;
+  padding: 0 0 24px 12px;
+  background-color: #fff;
+  z-index: 4;
+
+  @media (max-width: 768px) {
+    margin: 5px 24px;
+    width: 100%;
+  }
 `;
 
 const ActionButtonWrapper = styled.div`
-  margin: 0px 20px 2px 0px;
+  width: 300px;
   display: flex;
-  gap: 10px;
-  position: absolute;
+  justify-content: space-evenly;
+  padding-right: 20px;
+  position: relative;
   right: 0;
-  bottom: -56px;
-  @media (max-width: 1280px) {
-    right: 10px;
+  padding-bottom: 10px;
+  background-color: #fff;
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;
 
 const TitleWrapper = styled.div`
+  /* width: 300px; */
   width: 100%;
   background-color: #fff;
   height: 60px;
@@ -330,16 +365,23 @@ const TitleWrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px 10px 20px;
-  box-shadow: 0 5px 2px -2px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 
   @media (max-width: 768px) {
+    width: 100%;
     padding: 10px 15px;
   }
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
+  position: relative;
   align-items: center;
+  z-index: 5;
+  right: 10px;
+  @media (max-width: 768px) {
+    right: 10px;
+  }
 `;
 
 const ButtonBase = styled.button`
@@ -391,6 +433,7 @@ const JourneyTitleInput = styled.input`
   resize: none;
   @media (max-width: 768px) {
     font-size: 20px;
+    padding-left: 0;
   }
 
   &:focus {
@@ -400,7 +443,7 @@ const JourneyTitleInput = styled.input`
 
 const JourneyDescriptionInput = styled.textarea`
   width: 90%;
-  height: 50px;
+  height: 70px;
   padding: 12px;
   margin-bottom: 10px;
   font-size: 20px;
@@ -408,6 +451,13 @@ const JourneyDescriptionInput = styled.textarea`
   border-bottom: 2px solid rgba(204, 204, 204, 0.3);
   resize: none;
   outline: none;
+  overflow: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
   @media (max-width: 768px) {
     font-size: 18px;
     padding: 12px 0 0 0;
@@ -422,6 +472,7 @@ const ContentWrapper = styled.div`
   height: calc(100vh - 320px);
   margin-top: 16px;
   overflow-y: cover;
+  margin-top: 300px;
   @media (max-width: 768px) {
     height: calc(100vh - 260px);
     padding: 8px;
@@ -526,8 +577,8 @@ const TimeDifference = styled.p`
 `;
 
 const HomeButton = styled.img`
-  position: absolute;
-  right: 32px;
+  position: relative;
+  right: 20px;
   width: 36px;
   height: 36px;
   cursor: pointer;

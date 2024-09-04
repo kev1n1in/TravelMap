@@ -121,6 +121,7 @@ const CreateJourneyButton = styled.div`
   border-radius: 30px;
   text-align: center;
   cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   &:hover {
     transform: scale(1.1);
   }
