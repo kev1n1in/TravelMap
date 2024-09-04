@@ -7,12 +7,9 @@ import {
   query,
   where,
   deleteDoc,
-  orderBy,
-  startAfter,
   addDoc,
   updateDoc,
   serverTimestamp,
-  limit as firestoreLimit,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import dayjs from "dayjs";
@@ -59,28 +56,10 @@ export const saveJourneyInfo = async (documentId, title, description) => {
   });
 };
 
-export async function fetchUserJourneys(
-  userId,
-  { pageParam = null, limit = 6 }
-) {
+export async function fetchAndSortUserJourneys(userId) {
   try {
     const journeyRef = collection(db, "journeys");
-    let q = query(
-      journeyRef,
-      where("uid", "==", userId),
-      orderBy("createdAt"),
-      firestoreLimit(limit)
-    );
-
-    if (pageParam) {
-      q = query(
-        journeyRef,
-        where("uid", "==", userId),
-        orderBy("createdAt"),
-        startAfter(pageParam),
-        firestoreLimit(limit)
-      );
-    }
+    const q = query(journeyRef, where("uid", "==", userId));
 
     const snapshot = await getDocs(q);
     const journeys = await Promise.all(
@@ -122,18 +101,34 @@ export async function fetchUserJourneys(
                 }`
               : null,
           createdAt: dayjs(journeyData.createdAt).format("YYYY-MM-DD"),
+          updatedAt: journeyData.updatedAt,
         };
       })
     );
 
-    const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+    const sortedJourneys = journeys.sort((a, b) => {
+      const aHasJourney = a.journey && a.journey.length > 0;
+      const bHasJourney = b.journey && b.journey.length > 0;
 
-    return {
-      journeys,
-      lastVisible,
-    };
+      if (aHasJourney && !bHasJourney) return -1;
+      if (!aHasJourney && bHasJourney) return 1;
+
+      if (!aHasJourney && !bHasJourney) {
+        const aUpdated = a.updatedAt
+          ? new Date(a.updatedAt.seconds * 1000)
+          : new Date(0);
+        const bUpdated = b.updatedAt
+          ? new Date(b.updatedAt.seconds * 1000)
+          : new Date(0);
+        return bUpdated - aUpdated;
+      }
+
+      return 0;
+    });
+
+    return sortedJourneys;
   } catch (error) {
-    console.error("Error fetching user journeys:", error.message);
+    console.error("Error fetching and sorting user journeys:", error.message);
     throw error;
   }
 }
