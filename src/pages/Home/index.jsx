@@ -8,18 +8,11 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { RingLoader } from "react-spinners";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../firebase/firebaseConfig";
+import { auth } from "../../firebase/firebaseConfig";
 import {
-  fetchUserJourneys,
+  fetchAndSortUserJourneys,
   deleteJourney,
 } from "../../firebase/firebaseService";
-import {
-  collection,
-  onSnapshot,
-  updateDoc,
-  doc as firestoreDoc,
-  serverTimestamp,
-} from "firebase/firestore";
 import defaultImg from "./img/default-img.jpg";
 import trashPng from "./img/delete.png";
 import { motion } from "framer-motion";
@@ -35,107 +28,54 @@ const Home = () => {
   const [user, loading, authError] = useAuthState(auth);
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [filteredSearch, setFilteredSearch] = useState([]);
-  const [journeyTimes, setJourneyTimes] = useState({});
   const queryClient = useQueryClient();
   const [showJourneyCreator, setShowJourneyCreator] = useState(false);
   const { ConfirmDialogComponent, openDialog } = useConfirmDialog();
   const { addAlert, AlertMessage } = useAlert();
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-    error,
-  } = useInfiniteQuery({
-    queryKey: ["userJourneys", user?.uid],
-    queryFn: ({ pageParam = null }) =>
-      fetchUserJourneys(user.uid, { pageParam, limit: 6 }),
-    getNextPageParam: (lastPage) => lastPage?.lastVisible || undefined,
-    enabled: !!user?.uid,
-  });
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, error } =
+    useInfiniteQuery({
+      queryKey: ["userJourneys", user?.uid, search],
+      queryFn: async ({ pageParam = 0 }) => {
+        const allJourneys = await fetchAndSortUserJourneys(user.uid);
+        const filteredJourneys = allJourneys.filter(
+          (journey) =>
+            journey.title.toLowerCase().includes(search.toLowerCase()) ||
+            journey.description.toLowerCase().includes(search.toLowerCase())
+        );
+        const start = pageParam * 12;
+        const end = start + 12;
+        return {
+          journeys: filteredJourneys.slice(start, end),
+          nextPage: pageParam + 1,
+          hasMore: filteredJourneys.length > end,
+        };
+      },
+      getNextPageParam: (lastPage) =>
+        lastPage.hasMore ? lastPage.nextPage : undefined,
+      enabled: !!user?.uid,
+    });
 
   useEffect(() => {
-    if (status === "success" && data) {
-      const allDocs = data.pages.flatMap((page) => page.journeys);
+    const handleScroll = () => {
+      const { scrollHeight, scrollTop, clientHeight } =
+        document.documentElement;
 
-      const searchStr = typeof search === "string" ? search.toLowerCase() : "";
-      const filtered = allDocs.filter((journeyDoc) => {
-        return (
-          journeyDoc.title.toLowerCase().includes(searchStr) ||
-          journeyDoc.description.toLowerCase().includes(searchStr)
-        );
-      });
-      const journeyTimesData = {};
-      const unsubscribeList = [];
+      if (
+        scrollHeight - scrollTop === clientHeight &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    };
 
-      filtered.forEach((journeyDoc) => {
-        if (journeyDoc.journey && journeyDoc.journey.length > 0) {
-          const sortedJourneys = journeyDoc.journey.sort((a, b) => {
-            return (
-              new Date(`${a.date} ${a.startTime}`) -
-              new Date(`${b.date} ${b.startTime}`)
-            );
-          });
-          journeyTimesData[journeyDoc.id] = {
-            start: sortedJourneys[0].date,
-            end: sortedJourneys[sortedJourneys.length - 1].date,
-          };
+    window.addEventListener("scroll", handleScroll);
 
-          const journeySubcollectionRef = collection(
-            db,
-            "journeys",
-            journeyDoc.id,
-            "journey"
-          );
-          const unsubscribe = onSnapshot(journeySubcollectionRef, () => {
-            const journeyDocRef = firestoreDoc(db, "journeys", journeyDoc.id);
-            updateDoc(journeyDocRef, {
-              updatedAt: serverTimestamp(),
-            }).catch((error) => {
-              console.error("Error updating document: ", error);
-            });
-          });
-
-          unsubscribeList.push(unsubscribe);
-        }
-      });
-
-      const sortedFiltered = filtered.sort((a, b) => {
-        const aStart = journeyTimesData[a.id]?.start
-          ? new Date(journeyTimesData[a.id].start)
-          : null;
-        const bStart = journeyTimesData[b.id]?.start
-          ? new Date(journeyTimesData[b.id].start)
-          : null;
-
-        if (aStart && bStart) {
-          return bStart - aStart;
-        }
-
-        if (!aStart && !bStart) {
-          const aUpdated = a.updatedAt
-            ? new Date(a.updatedAt.seconds * 1000)
-            : new Date(0);
-          const bUpdated = b.updatedAt
-            ? new Date(b.updatedAt.seconds * 1000)
-            : new Date(0);
-          return bUpdated - aUpdated;
-        }
-        if (aStart && !bStart) return -1;
-        if (!aStart && bStart) return 1;
-
-        return 0;
-      });
-
-      setFilteredSearch(sortedFiltered);
-      setJourneyTimes(journeyTimesData);
-      return () => {
-        unsubscribeList.forEach((unsubscribe) => unsubscribe());
-      };
-    }
-  }, [data, search, status]);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleSearchChange = (value) => {
     setSearch(value);
@@ -162,35 +102,17 @@ const Home = () => {
     navigate(`/journey/${id}`);
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const { scrollHeight, scrollTop, clientHeight } =
-        document.documentElement;
-
-      if (
-        scrollHeight - scrollTop <= clientHeight + 200 &&
-        hasNextPage &&
-        !isFetchingNextPage
-      ) {
-        fetchNextPage();
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  if (loading)
+  if (loading) {
     return (
       <LoaderWrapper>
         <RingLoader color="#57c2e9" size={100} />
       </LoaderWrapper>
     );
-  if (authError || error)
-    return <p>獲取用戶文檔時出錯: {authError?.message || error.message}</p>;
+  }
+
+  if (authError || error) {
+    return <p>獲取用戶資料時出錯: {authError?.message || error?.message}</p>;
+  }
 
   const toggleJourneyCreator = () => {
     setShowJourneyCreator(!showJourneyCreator);
@@ -209,57 +131,47 @@ const Home = () => {
         <JourneyCreator onClose={() => setShowJourneyCreator(false)} />
       )}
       <Container>
-        <BannerContainer></BannerContainer>
+        <BannerContainer />
         <SearchContainer>
           <SearchImg src={searchPng} />
           <SearchInput
             placeholder="搜尋行程"
+            value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
         </SearchContainer>
         <GridContainer>
-          {filteredSearch.map((doc) => (
-            <CardContainer
-              key={doc.id}
-              onClick={() => handleCardClick(doc.id)}
-              backgroundimage={
-                doc.journey &&
-                doc.journey.length > 0 &&
-                doc.journey[0].photos &&
-                doc.journey[0].photos.length > 0
-                  ? doc.journey[0].photos[0]
-                  : defaultImg
-              }
-            >
-              <JourneyDetailContainer>
-                <JourneyTitle>{doc.title || "無標題"}</JourneyTitle>
-                <JourneyTime>
-                  {journeyTimes[doc.id] &&
-                  journeyTimes[doc.id].start &&
-                  journeyTimes[doc.id].end
-                    ? `${journeyTimes[doc.id].start} ~ ${
-                        journeyTimes[doc.id].end
-                      }`
-                    : "尚未新增行程"}
-                </JourneyTime>
-                <TextOverlay>
-                  <JourneyDescription variant="body2" color="textSecondary">
+          {data?.pages.map((page) =>
+            page.journeys.map((doc) => (
+              <CardContainer
+                key={doc.id}
+                onClick={() => handleCardClick(doc.id)}
+                backgroundimage={doc?.journey?.[0]?.photos?.[0] || defaultImg}
+              >
+                <JourneyDetailContainer>
+                  <JourneyTitle>{doc.title || "無標題"}</JourneyTitle>
+                  <JourneyTime>
+                    {doc.start && doc.end
+                      ? `${doc.start} ~ ${doc.end}`
+                      : "尚未新增行程"}
+                  </JourneyTime>
+                  <JourneyDescription>
                     {doc.description || "無描述"}
                   </JourneyDescription>
-                </TextOverlay>
-              </JourneyDetailContainer>
-              <RemoveImg
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleDeleteJourney(doc.id, doc.title);
-                }}
-                src={trashPng}
-                alt="刪除"
-                animate={{ rotate: [0, 20, -20, 0] }}
-                transition={{ duration: 0.5 }}
-              />
-            </CardContainer>
-          ))}
+                </JourneyDetailContainer>
+                <RemoveImg
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleDeleteJourney(doc.id, doc.title);
+                  }}
+                  src={trashPng}
+                  alt="刪除"
+                  animate={{ rotate: [0, 20, -20, 0] }}
+                  transition={{ duration: 0.5 }}
+                />
+              </CardContainer>
+            ))
+          )}
         </GridContainer>
         {isFetchingNextPage && (
           <LoaderScrollWrapper>
@@ -357,7 +269,7 @@ const GridContainer = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin: 80px 40px 20px 40px;
-  padding: 20px;
+  padding: 20px 20px 200px 20px;
   @media (max-width: 768px) {
     grid-template-columns: repeat(1, 1fr);
     margin: 30px 40px 20px 40px;
@@ -377,6 +289,7 @@ const CardContainer = styled.div`
   background-size: cover;
   background-position: center;
   border-radius: 13px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   &:hover {
     transform: translateY(-10px);
   }
@@ -391,52 +304,62 @@ const LoaderWrapper = styled.div`
 
 const LoaderScrollWrapper = styled.div`
   display: flex;
+  position: relative;
   justify-content: center;
   align-items: center;
+  top: -200px;
   padding: 20px;
 `;
 
 const JourneyDetailContainer = styled.div`
   margin: 20px;
   position: absolute;
+  max-width: 80%;
   left: 0;
   bottom: 0;
+  white-space: nowrap;
 `;
 
 const JourneyTitle = styled.h2`
-  padding-top: 8px;
+  display: flex;
+  position: absolute;
+  bottom: 64px;
   font-size: 28px;
   font-weight: 800;
   color: white;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 `;
 
-const TextOverlay = styled.div`
-  padding: 5px;
-  border-radius: 5px;
-`;
-
 const JourneyTime = styled.span`
+  display: block;
+  position: absolute;
+  bottom: 24px;
+  width: 150px;
   font-weight: 600;
   color: #f8f8f8;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
   font-size: 16px;
+  white-space: normal;
 `;
 
 const JourneyDescription = styled.span`
   color: #fff;
   font-size: 16px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 `;
-
 const RemoveImg = styled(motion.img)`
+  width: 36px;
+  height: 36px;
   position: absolute;
   cursor: pointer;
   margin: 12px;
   top: 10px;
   right: 10px;
-  width: 24px;
-  height: 24px;
   &:hover {
     animation: rotate-animation 0.5s;
   }
