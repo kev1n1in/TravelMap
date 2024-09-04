@@ -1,7 +1,7 @@
 export const initialState = {
   isModalOpen: false,
   modalType: null,
-  jourenyData: null,
+  journeyData: null,
   polylinePath: [],
   sortedJourney: [],
 };
@@ -30,14 +30,14 @@ export const journeyReducer = (state, action) => {
         ...state,
         isModalOpen: true,
         modalType: action.payload.modalType,
-        jourenyData: action.payload.data,
+        journeyData: action.payload.data,
       };
     case actionTypes.CLOSE_MODAL:
       return {
         ...state,
         isModalOpen: false,
         modalType: null,
-        jourenyData: null,
+        journeyData: null,
       };
     default:
       return state;

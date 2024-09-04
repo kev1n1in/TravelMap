@@ -31,9 +31,7 @@ const SingleJourney = () => {
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(null);
   const [tripDate, setTripDate] = useState(dayjs());
-  const [tripStartTime, setTripStartTime] = useState(
-    dayjs().set("hour", 14).startOf("hour")
-  );
+  const [tripStartTime, setTripStartTime] = useState(dayjs().startOf("hour"));
   const [isStreetView, setIsStreetView] = useState(false);
   const [isCardsVisible, setIsCardsVisible] = useState("");
   const { id: journeyId } = useParams();
@@ -132,8 +130,8 @@ const SingleJourney = () => {
   });
 
   const { data: placeDetails } = useQuery({
-    queryKey: ["placeDetails", state.jourenyData?.place_id],
-    queryFn: () => fetchPlaceDetails(map, state.jourenyData.place_id),
+    queryKey: ["placeDetails", state.journeyData?.place_id],
+    queryFn: () => fetchPlaceDetails(map, state.journeyData.place_id),
     enabled: !!state.isModalOpen,
     staleTime: 1000 * 60 * 5,
     retry: false,
@@ -165,6 +163,10 @@ const SingleJourney = () => {
       return;
     }
     const modalType = isJourney ? "update" : "create";
+    if (modalType === "update") {
+      setTripDate(dayjs(data.date));
+      setTripStartTime(dayjs(data.startTime, "HH:mm"));
+    }
     dispatch({
       type: actionTypes.OPEN_MODAL,
       payload: { modalType, data: data },
@@ -179,6 +181,8 @@ const SingleJourney = () => {
     if (map) {
       map.setCenter({ lat: data.lat, lng: data.lng });
     }
+    setTripDate(dayjs(data.date));
+    setTripStartTime(dayjs(data.startTime, "HH:mm"));
     dispatch({
       type: actionTypes.OPEN_MODAL,
       payload: { modalType: "update", data: data },

@@ -66,6 +66,7 @@ const Modal = ({
   const modalContent = (
     <ModalOverlay>
       <ModalContainer>
+        <ModalHeader></ModalHeader>
         <PhotosContainer>
           {placeDetails.photos && placeDetails.photos.length > 0 && (
             <>
@@ -263,13 +264,31 @@ const InfoContainer = styled.div`
   }
 `;
 
+const ModalHeader = styled.div`
+  display: none;
+  @media (max-width: 768px) {
+    display: block;
+    /* position: absolute; */
+    top: 0;
+    background-color: white;
+    height: 60px;
+    position: fixed;
+    z-index: 5;
+    width: 100%;
+  }
+`;
+
 const AttractionName = styled.h1`
   width: 250px;
   color: #2d4057;
   font-size: 24px;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   @media (max-width: 768px) {
-    background-color: white;
     margin: 0;
     position: fixed;
     top: 0;
@@ -289,6 +308,7 @@ const CloseIcon = styled.img`
   cursor: pointer;
   @media (max-width: 768px) {
     z-index: 8;
+    position: fixed;
   }
 `;
 
@@ -353,10 +373,10 @@ const ModalFooter = styled.div`
   @media (max-width: 768px) {
     position: fixed;
     z-index: 1;
-    bottom: 5px;
+    bottom: 0;
+    padding: 5px;
     justify-content: space-around;
     align-items: center;
-    padding: 10px 10px 10px 20px;
     background-color: white;
   }
 `;
