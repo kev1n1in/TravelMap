@@ -11,7 +11,6 @@ const Map = ({
   onUnmount,
   polylinePath,
   places,
-  journeyData,
   center,
   onClickMarker,
   sortedJourney,
@@ -40,7 +39,7 @@ const Map = ({
       {places?.map((place) => {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        const isInJourneys = journeyData?.some(
+        const isInJourneys = sortedJourney?.some(
           (journey) => journey.lat === lat && journey.lng === lng
         );
         return (

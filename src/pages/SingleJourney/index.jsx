@@ -47,7 +47,6 @@ const SingleJourney = () => {
         setIsStreetView(false);
       }
     };
-
     window.addEventListener("resize", handleResize);
     handleResize();
 
@@ -110,16 +109,10 @@ const SingleJourney = () => {
     dispatch({ type: actionTypes.SET_SORTED_JOURNEY, payload: sorted });
   }, [isFetched, journeyData]);
 
-  useEffect(() => {
-    if (!Array.isArray(state.sortedJourney)) {
-      return;
-    }
-    const path = state.sortedJourney.map((journey) => ({
-      lat: journey.lat,
-      lng: journey.lng,
-    }));
-    dispatch({ type: actionTypes.SET_POLYLINE_PATH, payload: path });
-  }, [state.sortedJourney]);
+  const polylinePath = state.sortedJourney?.map((journey) => ({
+    lat: journey.lat,
+    lng: journey.lng,
+  }));
 
   const { data: places, refetch: refetchPlace } = useQuery({
     queryKey: ["places", center],
@@ -325,10 +318,9 @@ const SingleJourney = () => {
       <MapContainer>
         <Map
           onUnmount={handleMapUnmount}
-          polylinePath={state.polylinePath}
+          polylinePath={polylinePath}
           center={center}
           places={places}
-          journeyData={journeyData}
           onClickMarker={handleMarkerClick}
           sortedJourney={state.sortedJourney}
           onMapLoad={handleMapLoad}
