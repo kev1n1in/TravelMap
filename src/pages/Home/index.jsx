@@ -124,8 +124,6 @@ const Home = () => {
         onSearchChange={handleSearchChange}
         onCreateJourney={toggleJourneyCreator}
         isCreatingJourney={showJourneyCreator}
-        search={search}
-        setSearch={setSearch}
       />
       {showJourneyCreator && (
         <JourneyCreator onClose={() => setShowJourneyCreator(false)} />

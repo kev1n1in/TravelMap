@@ -45,7 +45,9 @@ const SingleJourney = () => {
       if (window.innerWidth > 768) {
         setIsCardsVisible(true);
       }
-      setIsStreetView(window.innerWidth > 768);
+      if (window.innerWidth <= 768) {
+        setIsStreetView(false);
+      }
     };
 
     window.addEventListener("resize", handleResize);

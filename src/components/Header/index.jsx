@@ -4,13 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import searchImg from "./search-interface.png";
 
-const Header = ({
-  onSearchChange,
-  onCreateJourney,
-  isCreatingJourney,
-  search,
-  setSearch,
-}) => {
+const Header = ({ onSearchChange, onCreateJourney, isCreatingJourney }) => {
   const navigate = useNavigate();
   const [opacity, setOpacity] = useState(1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -29,19 +23,16 @@ const Header = ({
   const handleSearchToggle = () => {
     setIsSearchOpen(!isSearchOpen);
     if (!isSearchOpen) {
-      setSearch("");
       onSearchChange("");
     }
   };
 
   const handleSearchChange = (event) => {
-    setSearch(event.target.value);
     onSearchChange(event.target.value);
     if (!event || !event.target || typeof event.target.value === "undefined") {
       return;
     }
     const value = event.target.value || "";
-    setSearch(value);
     onSearchChange(value);
   };
 
@@ -54,7 +45,6 @@ const Header = ({
             <SearchInput
               type="text"
               placeholder="搜尋行程..."
-              value={search}
               onChange={handleSearchChange}
               autoFocus
               $isSearchOpen={isSearchOpen}
