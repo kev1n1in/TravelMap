@@ -60,7 +60,6 @@ export async function fetchAndSortUserJourneys(userId) {
   try {
     const journeyRef = collection(db, "journeys");
     const q = query(journeyRef, where("uid", "==", userId));
-
     const snapshot = await getDocs(q);
     const journeys = await Promise.all(
       snapshot.docs.map(async (doc) => {
@@ -107,23 +106,29 @@ export async function fetchAndSortUserJourneys(userId) {
     );
 
     const sortedJourneys = journeys.sort((a, b) => {
-      const aHasJourney = a.journey && a.journey.length > 0;
-      const bHasJourney = b.journey && b.journey.length > 0;
+      const hasJourneyA = a.journey && a.journey.length > 0;
+      const hasJourneyB = b.journey && b.journey.length > 0;
 
-      if (aHasJourney && !bHasJourney) return -1;
-      if (!aHasJourney && bHasJourney) return 1;
-
-      if (!aHasJourney && !bHasJourney) {
-        const aUpdated = a.updatedAt
-          ? new Date(a.updatedAt.seconds * 1000)
-          : new Date(0);
-        const bUpdated = b.updatedAt
-          ? new Date(b.updatedAt.seconds * 1000)
-          : new Date(0);
-        return bUpdated - aUpdated;
+      if (hasJourneyA && !hasJourneyB) {
+        return -1;
+      }
+      if (!hasJourneyA && hasJourneyB) {
+        return 1;
       }
 
-      return 0;
+      if (hasJourneyA && hasJourneyB) {
+        const startDateA = a.start ? a.start.split(" ")[0] : "";
+        const startDateB = b.start ? b.start.split(" ")[0] : "";
+        return startDateB.localeCompare(startDateA);
+      }
+
+      const updatedAtA = a.updatedAt
+        ? new Date(a.updatedAt.seconds * 1000)
+        : new Date(0);
+      const updatedAtB = b.updatedAt
+        ? new Date(b.updatedAt.seconds * 1000)
+        : new Date(0);
+      return updatedAtB - updatedAtA;
     });
 
     return sortedJourneys;
